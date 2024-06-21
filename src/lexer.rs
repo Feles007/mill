@@ -20,6 +20,14 @@ pub enum Token {
 	True,
 	False,
 	Null,
+	Fn,
+	Return,
+	Let,
+	If,
+	Else,
+	Loop,
+	Break,
+	Continue,
 
 	Eof,
 }
@@ -121,6 +129,14 @@ impl<'a> Lexer<'a> {
 						"true" => Token::True,
 						"false" => Token::False,
 						"null" => Token::Null,
+						"fn" => Token::Fn,
+						"return" => Token::Return,
+						"let" => Token::Let,
+						"if" => Token::If,
+						"else" => Token::Else,
+						"loop" => Token::Loop,
+						"break" => Token::Break,
+						"continue" => Token::Continue,
 						_ => Token::Identifier(Identifier(identifier)),
 					}
 				}
