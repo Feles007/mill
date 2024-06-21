@@ -45,7 +45,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 		Token::String(s) => Expression::String(s),
 
 		Token::Symbol(Symbol::ParenLeft) => {
-			let lhs = parse_expression_bp(lexer, 0)?;
+			let lhs = parse_expression(lexer)?;
 			match lexer.next()? {
 				Token::Symbol(Symbol::ParenRight) => {}
 				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
