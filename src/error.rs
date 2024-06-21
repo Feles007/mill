@@ -1,4 +1,5 @@
 use crate::LineNumber;
+use crate::lexer::Token;
 use std::error::Error;
 use std::fmt::{self, Formatter, Display};
 
@@ -16,7 +17,10 @@ pub enum ParseErrorKind {
 	EndOfToken,
 	
 	// Parser
-	UnexpectedToken,
+	UnexpectedToken {
+		expected: &'static str,
+		found: Token,
+	},
 }
 
 impl Display for ParseError {
@@ -27,11 +31,14 @@ impl Display for ParseError {
 
 		match self.kind {
 			ParseErrorKind::UnexpectedCharacter(c) => {
-				writeln!(f, "Unexpected character '{}'", c)?;
+				writeln!(f, "Unexpected character '{c}'")?;
 			}
 			ParseErrorKind::NonAsciiByte(b) => {
-				writeln!(f, "Non ASCII byte: 0x{:X?}", b)?;
+				writeln!(f, "Non ASCII byte: 0x{b:X?}")?;
 				writeln!(f, "{indent}note: This is allowed in comments and string literals");
+			}
+			ParseErrorKind::UnexpectedToken { expected, ref found } => {
+				writeln!(f, "Expected {expected}, found {found}")?;
 			}
 			_ => todo!()
 		}

@@ -35,10 +35,16 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 		}
 		Token::Symbol(Symbol::ParenLeft) => {
 			let lhs = parse_expression_bp(lexer, 0)?;
-			assert_eq!(lexer.next()?, Token::Symbol(Symbol::ParenRight));
+			match lexer.next()? {
+				Token::Symbol(Symbol::ParenRight) => {}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "closing parenthesis",
+					found: t,
+				}))
+			}
 			lhs
 		}
-		Token::Symbol(op) => {
+		Token::Symbol(op) if op.prefix_bp().is_some() => {
 			let ((), r_bp) = op.prefix_bp().unwrap();
 			let rhs = parse_expression_bp(lexer, r_bp)?;
 			match op {
@@ -47,14 +53,20 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 				_ => unimplemented!(),
 			}
 		}
-		t => return Err(lexer.error(ParseErrorKind::UnexpectedToken)),
+		t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+			expected: "start of expression",
+			found: t,
+		})),
 	};
 
 	loop {
 		let op = match lexer.peek()? {
 			Token::Eof => break,
 			Token::Symbol(op) => op,
-			t => panic!("bad token: {:?}", t),
+			t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+				expected: "operator or end of expression",
+				found: t,
+			})),
 		};
 
 		if let Some((l_bp, ())) = op.postfix_bp() {
@@ -63,30 +75,45 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			}
 			lexer.next()?;
 
-			lhs = if op == Symbol::SquareLeft {
-				let rhs = parse_expression_bp(lexer, 0)?;
-				assert_eq!(lexer.next()?, Token::Symbol(Symbol::SquareRight));
-				Expression::Index(Box::new(lhs), Box::new(rhs))
-			} else if op == Symbol::ParenLeft {
-				let mut arguments = Vec::new();
+			lhs = match op {
+				Symbol::SquareLeft => {
 
-				loop {
-					if lexer.peek()? == Token::Symbol(Symbol::ParenRight) {
-						break;
+					let rhs = parse_expression_bp(lexer, 0)?;
+					match lexer.next()? {
+						Token::Symbol(Symbol::SquareRight) => {}
+						t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+							expected: "closing square bracket",
+							found: t,
+						}))
 					}
-					arguments.push(parse_expression_bp(lexer, 0)?);
-					if lexer.peek()? != Token::Symbol(Symbol::Comma) {
-						break;
-					}
-					lexer.next()?;
+					Expression::Index(Box::new(lhs), Box::new(rhs))
 				}
-				assert_eq!(lexer.next()?, Token::Symbol(Symbol::ParenRight));
+				Symbol::ParenLeft => {
+					let mut arguments = Vec::new();
 
-				Expression::Call(Box::new(lhs), arguments)
-				
-			} else {
-				unimplemented!()
+					loop {
+						if lexer.peek()? == Token::Symbol(Symbol::ParenRight) {
+							break;
+						}
+						arguments.push(parse_expression_bp(lexer, 0)?);
+						if lexer.peek()? != Token::Symbol(Symbol::Comma) {
+							break;
+						}
+						lexer.next()?;
+					}
+					match lexer.next()? {
+						Token::Symbol(Symbol::ParenRight) => {}
+						t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+							expected: "closing parenthesis",
+							found: t,
+						}))
+					}
+	
+					Expression::Call(Box::new(lhs), arguments)
+				}
+				_ => unreachable!()
 			};
+			
 			continue;
 		}
 
@@ -109,7 +136,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 
 					Symbol::Dot => Expression::Member(lhs, rhs),
 
-					_ => unimplemented!()
+					_ => unreachable!()
 				}
 			};
 			continue;

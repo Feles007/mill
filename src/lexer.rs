@@ -1,5 +1,6 @@
 use crate::error::{ParseError, ParseErrorKind};
 use crate::LineNumber;
+use std::fmt::{self, Formatter, Display};
 use std::collections::VecDeque;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -181,5 +182,41 @@ impl Symbol {
 			Self::Dot => (14, 13),
 			_ => return None,
 		})
+	}
+}
+impl Display for Token {
+	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+		match self {
+			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
+			Self::Number(n) => write!(f, "number '{}'", n.0),
+			Self::Eof => write!(f, "end of file"),
+			Self::Symbol(s) => write!(f, "symbol '{}'", match s {
+				Symbol::Semicolon => ";",
+				Symbol::Comma => ",",
+				Symbol::Dot => ".",
+
+				Symbol::ParenLeft => "(",
+				Symbol::ParenRight => ")",
+				Symbol::CurlyLeft => "{",
+				Symbol::CurlyRight => "}",
+				Symbol::SquareLeft => "[",
+				Symbol::SquareRight => "]",
+
+				Symbol::Add => "+",
+				Symbol::Sub => "-",
+				Symbol::Mul => "*",
+				Symbol::Div => "/",
+				Symbol::Mod => "%",
+
+				Symbol::EqEq => "==",
+				Symbol::Eq => "=",
+				Symbol::NoEq => "!=",
+				Symbol::No => "!",
+				Symbol::LtEq => "<=",
+				Symbol::Lt => "<",
+				Symbol::GtEq => ">=",
+				Symbol::Gt => ">",
+			})
+		}
 	}
 }
