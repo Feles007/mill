@@ -21,7 +21,9 @@ fn main() {
  4.8
 	"#;
 
-	match expression::parse_expression(source) {
+	let mut lexer = lexer::Lexer::new(source);
+
+	match expression::parse_expression(&mut lexer) {
 		Ok(e) => println!("{e:#?}"),
 		Err(e) => println!("{e}"),
 	}

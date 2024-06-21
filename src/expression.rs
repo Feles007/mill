@@ -22,9 +22,8 @@ pub enum Expression {
 	Member(Box<Expression>, Box<Expression>),
 }
 
-pub fn parse_expression(input: &str) -> Result<Expression, ParseError> {
-	let mut lexer = Lexer::new(input);
-	parse_expression_bp(&mut lexer, 0)
+pub fn parse_expression(lexer: &mut Lexer) -> Result<Expression, ParseError> {
+	parse_expression_bp(lexer, 0)
 }
 
 fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, ParseError> {
