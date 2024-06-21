@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use std::str::{self, FromStr};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Identifier(String);
+pub struct Identifier(pub String);
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,6 +13,7 @@ pub enum Token {
 	Identifier(Identifier),
 	Integer(Integer),
 	Float(Float),
+	String(String),
 
 	Symbol(Symbol),
 
@@ -123,6 +124,14 @@ impl<'a> Lexer<'a> {
 						_ => Token::Identifier(Identifier(identifier)),
 					}
 				}
+				'"' => {
+					while self.source.get(token_start + token_end).map(|c| *c != b'"').unwrap_or(false) {
+						token_end += 1;
+					}
+					let string = str::from_utf8(&self.source[(token_start + 1)..(token_start + token_end)]).unwrap();
+					token_end += 1;
+					Token::String(string.to_owned())
+				}
 				
 
 				':' => Token::Symbol(Symbol::Colon),
@@ -230,6 +239,7 @@ impl Display for Token {
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
 			Self::Integer(n) => write!(f, "integer '{}'", n),
 			Self::Float(n) => write!(f, "float '{}'", n),
+			Self::String(s) => write!(f, "string \"{}\"", s),
 			Self::Eof => write!(f, "end of file"),
 			Self::Symbol(s) => write!(f, "symbol '{}'", match s {
 				Symbol::Colon => ":",

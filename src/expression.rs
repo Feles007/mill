@@ -11,7 +11,9 @@ pub enum Expression {
 	Identifier(Identifier),
 	Integer(Integer),
 	Float(Float),
+	String(String),
 	Array(Vec<Expression>),
+	Map(Vec<(Expression, Expression)>),
 	
 	Identity(Box<Expression>),
 	Not(Box<Expression>),
@@ -40,6 +42,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 		Token::Identifier(i) => Expression::Identifier(i),
 		Token::Integer(n) => Expression::Integer(n),
 		Token::Float(n) => Expression::Float(n),
+		Token::String(s) => Expression::String(s),
 
 		Token::Symbol(Symbol::ParenLeft) => {
 			let lhs = parse_expression_bp(lexer, 0)?;
@@ -78,6 +81,56 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			}
 
 			Expression::Array(initializers)
+		}
+		Token::Symbol(Symbol::CurlyLeft) => {
+			let mut initializers = Vec::new();
+
+			loop {
+				let key;
+				match lexer.next()? {
+					Token::Eof | Token::Symbol(Symbol::CurlyRight) => break,
+					Token::Identifier(i) => {	
+						key = Expression::String(i.0);
+					}
+					Token::Symbol(Symbol::SquareLeft) => {
+						key = parse_expression(lexer)?;
+						match lexer.next()? {
+							Token::Symbol(Symbol::SquareRight) => {}
+							t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+								expected: "closing square bracket",
+								found: t,
+							}))
+						}
+					}
+					t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "identifier or [expression]",
+						found: t,
+					}))
+				}
+				match lexer.next()? {
+					Token::Symbol(Symbol::Colon) => {}
+					t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "colon",
+						found: t,
+					}))
+				}
+				let value = parse_expression(lexer)?;
+				initializers.push((key, value));
+				match lexer.peek()? {
+					Token::Symbol(Symbol::Comma) => {lexer.next()?;},
+					_ => break,
+				}
+			}
+
+			match lexer.next()? {
+				Token::Symbol(Symbol::CurlyRight) => {}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "closing curly bracket",
+					found: t,
+				}))
+			}
+
+			Expression::Map(initializers)
 		}
 		Token::Symbol(op) if op.prefix_bp().is_some() => {
 			let ((), r_bp) = op.prefix_bp().unwrap();

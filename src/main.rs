@@ -17,7 +17,7 @@ type Float = f64;
 
 fn main() {
 	let source = r#"
-[false, 3, 9 * f() + 3,]
+	"asdaa fn let x = {}"
 "#;
 
 	let mut lexer = lexer::Lexer::new(source);
