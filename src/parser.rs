@@ -1,4 +1,5 @@
 use crate::lexer::{Lexer, Token, Number, Identifier, Symbol};
+use crate::error::{ParseError, ParseErrorKind};
 
 #[derive(Debug)]
 pub enum Expression {
@@ -19,15 +20,13 @@ pub enum Expression {
 	Member(Box<Expression>, Box<Expression>),
 }
 
-pub fn expr(input: &str) -> Expression {
-	let mut lexer = Lexer::new(input);
-	dbg!(&lexer);
-	let re = expr_bp(&mut lexer, 0);
-	re
+pub fn parse_expression(input: &str) -> Result<Expression, ParseError> {
+	let mut lexer = Lexer::new(input)?;
+	parse_expression_bp(&mut lexer, 0)
 }
 
-fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Expression {
-	let mut lhs = match lexer.next() {
+fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, ParseError> {
+	let mut lhs = match lexer.next()? {
 		Token::Identifier(i) => {
 			Expression::Identifier(i)
 		}
@@ -35,24 +34,24 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Expression {
 			Expression::Number(n)
 		}
 		Token::Symbol(Symbol::ParenLeft) => {
-			let lhs = expr_bp(lexer, 0);
-			assert_eq!(lexer.next(), Token::Symbol(Symbol::ParenRight));
+			let lhs = parse_expression_bp(lexer, 0)?;
+			assert_eq!(lexer.next()?, Token::Symbol(Symbol::ParenRight));
 			lhs
 		}
 		Token::Symbol(op) => {
 			let ((), r_bp) = op.prefix_bp().unwrap();
-			let rhs = expr_bp(lexer, r_bp);
+			let rhs = parse_expression_bp(lexer, r_bp)?;
 			match op {
 				Symbol::Add => Expression::Identity(Box::new(rhs)),
 				Symbol::Sub => Expression::Not(Box::new(rhs)),
 				_ => unimplemented!(),
 			}
 		}
-		t => panic!("bad token: {:?}", t),
+		t => return Err(lexer.error(ParseErrorKind::UnexpectedToken)),
 	};
 
 	loop {
-		let op = match lexer.peek() {
+		let op = match lexer.peek()? {
 			Token::Eof => break,
 			Token::Symbol(op) => op,
 			t => panic!("bad token: {:?}", t),
@@ -62,26 +61,26 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Expression {
 			if l_bp < min_bp {
 				break;
 			}
-			lexer.next();
+			lexer.next()?;
 
 			lhs = if op == Symbol::SquareLeft {
-				let rhs = expr_bp(lexer, 0);
-				assert_eq!(lexer.next(), Token::Symbol(Symbol::SquareRight));
+				let rhs = parse_expression_bp(lexer, 0)?;
+				assert_eq!(lexer.next()?, Token::Symbol(Symbol::SquareRight));
 				Expression::Index(Box::new(lhs), Box::new(rhs))
 			} else if op == Symbol::ParenLeft {
 				let mut arguments = Vec::new();
 
 				loop {
-					if lexer.peek() == Token::Symbol(Symbol::ParenRight) {
+					if lexer.peek()? == Token::Symbol(Symbol::ParenRight) {
 						break;
 					}
-					arguments.push(expr_bp(lexer, 0));
-					if lexer.peek() != Token::Symbol(Symbol::Comma) {
+					arguments.push(parse_expression_bp(lexer, 0)?);
+					if lexer.peek()? != Token::Symbol(Symbol::Comma) {
 						break;
 					}
-					lexer.next();
+					lexer.next()?;
 				}
-				assert_eq!(lexer.next(), Token::Symbol(Symbol::ParenRight));
+				assert_eq!(lexer.next()?, Token::Symbol(Symbol::ParenRight));
 
 				Expression::Call(Box::new(lhs), arguments)
 				
@@ -95,10 +94,10 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Expression {
 			if l_bp < min_bp {
 				break;
 			}
-			lexer.next();
+			lexer.next()?;
 
 			lhs = {
-				let rhs = expr_bp(lexer, r_bp);
+				let rhs = parse_expression_bp(lexer, r_bp)?;
 				let lhs = Box::new(lhs);
 				let rhs = Box::new(rhs);
 				match op {
@@ -119,5 +118,5 @@ fn expr_bp(lexer: &mut Lexer, min_bp: u8) -> Expression {
 		break;
 	}
 
-	lhs
+	Ok(lhs)
 }

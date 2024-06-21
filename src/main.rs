@@ -9,9 +9,16 @@ use std::{fmt, io::BufRead};
 type LineNumber = usize;
 
 fn main() {
-	for line in std::io::stdin().lock().lines() {
-		let line = line.unwrap();
-		let s = parser::expr(&line);
-		println!("{:#?}", s);
+	let source = r#"
+3 + 
+1 + 9 #asd
+* o.f() +
+g()
+
+	"#;
+
+	match parser::parse_expression(source) {
+		Ok(e) => println!("{e:#?}"),
+		Err(e) => println!("{e}"),
 	}
 }
