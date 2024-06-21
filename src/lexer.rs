@@ -86,7 +86,7 @@ impl<'a> Lexer<'a> {
 				c if c.is_ascii_digit() => {
 					Token::Number(Number(c))
 				}
-				c if c.is_ascii_alphabetic() => {
+				c if c.is_ascii_alphabetic() || c == '_' => {
 					while self.source.get(token_start + token_end).map(|c| c.is_ascii_alphanumeric() || *c == b'_').unwrap_or(false) {
 						token_end += 1;
 					}
