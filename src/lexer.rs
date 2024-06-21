@@ -1,19 +1,18 @@
 use crate::error::{ParseError, ParseErrorKind};
-use crate::LineNumber;
+use crate::{LineNumber, Float, Integer, UInteger};
 use std::fmt::{self, Formatter, Display};
 use std::collections::VecDeque;
-use std::str;
+use std::str::{self, FromStr};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identifier(String);
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Number(char);
 
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
 	Identifier(Identifier),
-	Number(Number),
+	Integer(Integer),
+	Float(Float),
 	Symbol(Symbol),
 	Eof,
 }
@@ -84,7 +83,25 @@ impl<'a> Lexer<'a> {
 
 
 				c if c.is_ascii_digit() => {
-					Token::Number(Number(c))
+					while self.source.get(token_start + token_end).map(|c| c.is_ascii_digit()).unwrap_or(false) {
+						token_end += 1;
+					}
+					let mut float = false;
+					if self.source.get(token_start + token_end + 1).is_some() &&
+						self.source[token_start + token_end] == b'.' && self.source[token_start + token_end + 1].is_ascii_digit() {
+						token_end += 2;
+						while self.source.get(token_start + token_end).map(|c| c.is_ascii_digit()).unwrap_or(false) {
+							token_end += 1;
+						}
+						float = true;
+					}
+					let string = &str::from_utf8(&self.source[token_start..(token_start + token_end)]).unwrap();
+					
+					if float {
+						Token::Float(Float::from_str(string).unwrap())
+					} else {
+						Token::Integer(UInteger::from_str(string).unwrap() as Integer)
+					}
 				}
 				c if c.is_ascii_alphabetic() || c == '_' => {
 					while self.source.get(token_start + token_end).map(|c| c.is_ascii_alphanumeric() || *c == b'_').unwrap_or(false) {
@@ -195,7 +212,8 @@ impl Display for Token {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
 		match self {
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
-			Self::Number(n) => write!(f, "number '{}'", n.0),
+			Self::Integer(n) => write!(f, "integer '{}'", n),
+			Self::Float(n) => write!(f, "float '{}'", n),
 			Self::Eof => write!(f, "end of file"),
 			Self::Symbol(s) => write!(f, "symbol '{}'", match s {
 				Symbol::Semicolon => ";",

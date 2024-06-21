@@ -1,10 +1,12 @@
-use crate::lexer::{Lexer, Token, Number, Identifier, Symbol};
+use crate::lexer::{Lexer, Token, Identifier, Symbol};
 use crate::error::{ParseError, ParseErrorKind};
+use crate::{Float, Integer};
 
 #[derive(Debug)]
 pub enum Expression {
 	Identifier(Identifier),
-	Number(Number),
+	Integer(Integer),
+	Float(Float),
 	
 	Identity(Box<Expression>),
 	Not(Box<Expression>),
@@ -30,8 +32,11 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 		Token::Identifier(i) => {
 			Expression::Identifier(i)
 		}
-		Token::Number(n) => {
-			Expression::Number(n)
+		Token::Integer(n) => {
+			Expression::Integer(n)
+		}
+		Token::Float(n) => {
+			Expression::Float(n)
 		}
 		Token::Symbol(Symbol::ParenLeft) => {
 			let lhs = parse_expression_bp(lexer, 0)?;
