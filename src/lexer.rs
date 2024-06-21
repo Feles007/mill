@@ -26,8 +26,8 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-	pub fn new(input: &'a str) -> Result<Self, ParseError> {
-		Ok(Lexer { source: input.as_bytes(), current_index: 0, current_token: None, line_number: 1 })
+	pub fn new(input: &'a str) -> Self {
+		Lexer { source: input.as_bytes(), current_index: 0, current_token: None, line_number: 1 }
 	}
 
 	pub fn next(&mut self) -> Result<Token, ParseError> {

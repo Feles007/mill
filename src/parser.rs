@@ -23,7 +23,7 @@ pub enum Expression {
 }
 
 pub fn parse_expression(input: &str) -> Result<Expression, ParseError> {
-	let mut lexer = Lexer::new(input)?;
+	let mut lexer = Lexer::new(input);
 	parse_expression_bp(&mut lexer, 0)
 }
 
