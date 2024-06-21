@@ -2,7 +2,7 @@
 
 mod error;
 mod lexer;
-mod parser;
+mod expression;
 
 use std::{fmt, io::BufRead};
 
@@ -21,7 +21,7 @@ fn main() {
  4.8
 	"#;
 
-	match parser::parse_expression(source) {
+	match expression::parse_expression(source) {
 		Ok(e) => println!("{e:#?}"),
 		Err(e) => println!("{e}"),
 	}
