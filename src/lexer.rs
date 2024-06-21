@@ -54,10 +54,10 @@ impl<'a> Lexer<'a> {
 		let mut token_end = 1;
 
 		loop {
-			if token_start == self.source.len() {
-				return Ok(Token::Eof);
-			}
-			let byte = self.source[token_start];
+			let byte = match self.source.get(token_start) {
+				Some(b) => *b,
+				None => return Ok(Token::Eof),
+			};
 			if !byte.is_ascii() {
 				return Err(self.error(ParseErrorKind::NonAsciiByte(byte)));
 			}
