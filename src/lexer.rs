@@ -252,11 +252,22 @@ impl Display for Token {
 			Self::True => write!(f, "true"),
 			Self::False => write!(f, "false"),
 			Self::Null => write!(f, "null"),
+			Self::Fn => write!(f, "fn"),
+			Self::Return => write!(f, "return"),
+			Self::Let => write!(f, "let"),
+			Self::If => write!(f, "if"),
+			Self::Else => write!(f, "else"),
+			Self::Loop => write!(f, "loop"),
+			Self::Break => write!(f, "break"),
+			Self::Continue => write!(f, "continue"),
+
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
 			Self::Integer(n) => write!(f, "integer '{}'", n),
 			Self::Float(n) => write!(f, "float '{}'", n),
 			Self::String(s) => write!(f, "string \"{}\"", s),
+
 			Self::Eof => write!(f, "end of file"),
+			
 			Self::Symbol(s) => write!(f, "symbol '{}'", match s {
 				Symbol::Colon => ":",
 				Symbol::Semicolon => ";",
