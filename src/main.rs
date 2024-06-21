@@ -17,9 +17,8 @@ type Float = f64;
 
 fn main() {
 	let source = r#"
-999 *
- 4.8
-	"#;
+[false, 3, 9 * f() + 3,]
+"#;
 
 	let mut lexer = lexer::Lexer::new(source);
 

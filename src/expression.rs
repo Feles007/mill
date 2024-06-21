@@ -4,9 +4,14 @@ use crate::{Float, Integer};
 
 #[derive(Debug)]
 pub enum Expression {
+	True,
+	False,
+	Null,
+
 	Identifier(Identifier),
 	Integer(Integer),
 	Float(Float),
+	Array(Vec<Expression>),
 	
 	Identity(Box<Expression>),
 	Not(Box<Expression>),
@@ -28,15 +33,14 @@ pub fn parse_expression(lexer: &mut Lexer) -> Result<Expression, ParseError> {
 
 fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, ParseError> {
 	let mut lhs = match lexer.next()? {
-		Token::Identifier(i) => {
-			Expression::Identifier(i)
-		}
-		Token::Integer(n) => {
-			Expression::Integer(n)
-		}
-		Token::Float(n) => {
-			Expression::Float(n)
-		}
+		Token::True => Expression::True,
+		Token::False => Expression::False,
+		Token::Null => Expression::Null,
+
+		Token::Identifier(i) => Expression::Identifier(i),
+		Token::Integer(n) => Expression::Integer(n),
+		Token::Float(n) => Expression::Float(n),
+
 		Token::Symbol(Symbol::ParenLeft) => {
 			let lhs = parse_expression_bp(lexer, 0)?;
 			match lexer.next()? {
@@ -47,6 +51,33 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 				}))
 			}
 			lhs
+		}
+		Token::Symbol(Symbol::SquareLeft) => {
+			let mut initializers = Vec::new();
+
+			loop {
+				match lexer.peek()? {
+					Token::Eof | Token::Symbol(Symbol::SquareRight) => break,
+					_ => {
+						let value = parse_expression(lexer)?;
+						initializers.push(value);
+					}
+				}
+				match lexer.peek()? {
+					Token::Symbol(Symbol::Comma) => {lexer.next()?;},
+					_ => break,
+				}
+			}
+
+			match lexer.next()? {
+				Token::Symbol(Symbol::SquareRight) => {}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "closing square bracket",
+					found: t,
+				}))
+			}
+
+			Expression::Array(initializers)
 		}
 		Token::Symbol(op) if op.prefix_bp().is_some() => {
 			let ((), r_bp) = op.prefix_bp().unwrap();
@@ -82,7 +113,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			lhs = match op {
 				Symbol::SquareLeft => {
 
-					let rhs = parse_expression_bp(lexer, 0)?;
+					let rhs = parse_expression(lexer)?;
 					match lexer.next()? {
 						Token::Symbol(Symbol::SquareRight) => {}
 						t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
@@ -99,7 +130,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 						if lexer.peek()? == Token::Symbol(Symbol::ParenRight) {
 							break;
 						}
-						arguments.push(parse_expression_bp(lexer, 0)?);
+						arguments.push(parse_expression(lexer)?);
 						if lexer.peek()? != Token::Symbol(Symbol::Comma) {
 							break;
 						}

@@ -13,7 +13,13 @@ pub enum Token {
 	Identifier(Identifier),
 	Integer(Integer),
 	Float(Float),
+
 	Symbol(Symbol),
+
+	True,
+	False,
+	Null,
+
 	Eof,
 }
 
@@ -110,10 +116,16 @@ impl<'a> Lexer<'a> {
 
 					let identifier = str::from_utf8(&self.source[token_start..(token_start + token_end)]).unwrap().to_owned();
 
-					Token::Identifier(Identifier(identifier))
+					match identifier.as_str() {
+						"true" => Token::True,
+						"false" => Token::False,
+						"null" => Token::Null,
+						_ => Token::Identifier(Identifier(identifier)),
+					}
 				}
 				
 
+				':' => Token::Symbol(Symbol::Colon),
 				';' => Token::Symbol(Symbol::Semicolon),
 				',' => Token::Symbol(Symbol::Comma),
 				'.' => Token::Symbol(Symbol::Dot),
@@ -160,6 +172,7 @@ impl<'a> Lexer<'a> {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Symbol {
+	Colon,
 	Semicolon,
 	Comma,
 	Dot,
@@ -211,11 +224,15 @@ impl Symbol {
 impl Display for Token {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
 		match self {
+			Self::True => write!(f, "true"),
+			Self::False => write!(f, "false"),
+			Self::Null => write!(f, "null"),
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
 			Self::Integer(n) => write!(f, "integer '{}'", n),
 			Self::Float(n) => write!(f, "float '{}'", n),
 			Self::Eof => write!(f, "end of file"),
 			Self::Symbol(s) => write!(f, "symbol '{}'", match s {
+				Symbol::Colon => ":",
 				Symbol::Semicolon => ";",
 				Symbol::Comma => ",",
 				Symbol::Dot => ".",
