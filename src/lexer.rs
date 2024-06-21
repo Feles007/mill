@@ -2,9 +2,10 @@ use crate::error::{ParseError, ParseErrorKind};
 use crate::LineNumber;
 use std::fmt::{self, Formatter, Display};
 use std::collections::VecDeque;
+use std::str;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Identifier(char);
+pub struct Identifier(String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Number(char);
 
@@ -86,7 +87,13 @@ impl<'a> Lexer<'a> {
 					Token::Number(Number(c))
 				}
 				c if c.is_ascii_alphabetic() => {
-					Token::Identifier(Identifier(c))
+					while self.source.get(token_start + token_end).map(|c| c.is_ascii_alphanumeric() || *c == b'_').unwrap_or(false) {
+						token_end += 1;
+					}
+
+					let identifier = str::from_utf8(&self.source[token_start..(token_start + token_end)]).unwrap().to_owned();
+
+					Token::Identifier(Identifier(identifier))
 				}
 				
 
