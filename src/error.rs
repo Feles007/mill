@@ -14,7 +14,6 @@ pub enum ParseErrorKind {
 	// Lexer
 	UnexpectedCharacter(char),
 	NonAsciiByte(u8),
-	EndOfToken,
 	
 	// Parser
 	UnexpectedToken {
