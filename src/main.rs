@@ -19,7 +19,7 @@ type Float = f64;
 fn main() {
 	let source = r#"
 
-let f = fn(a) { return a + 1; };
+let inc = fn(n) { return n + 1; }(4);
 
 "#;
 

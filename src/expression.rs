@@ -1,6 +1,7 @@
 use crate::lexer::{Lexer, Token, Identifier, Symbol};
 use crate::error::{ParseError, ParseErrorKind};
 use crate::{Float, Integer};
+use crate::statement::{Statement, parse_statement};
 
 #[derive(Debug)]
 pub enum Expression {
@@ -14,6 +15,8 @@ pub enum Expression {
 	String(String),
 	Array(Vec<Expression>),
 	Map(Vec<(Expression, Expression)>),
+
+	Function(Vec<Identifier>, Vec<Statement>),
 	
 	Identity(Box<Expression>),
 	Not(Box<Expression>),
@@ -140,6 +143,68 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 				Symbol::Sub => Expression::Not(Box::new(rhs)),
 				_ => unimplemented!(),
 			}
+		}
+		Token::Fn => {
+			match lexer.next()? {
+				Token::Symbol(Symbol::ParenLeft) => {},
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "parameter list",
+					found: t,
+				})),
+			}
+			
+			let mut parameters = Vec::new();
+
+			loop {
+				if lexer.peek()? == Token::Symbol(Symbol::ParenRight) {
+					break;
+				}
+				match lexer.next()? {
+					Token::Identifier(i) => parameters.push(i),
+					t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "identifier",
+						found: t,
+					}))
+				}
+				if lexer.peek()? != Token::Symbol(Symbol::Comma) {
+					break;
+				}
+				lexer.next()?;
+			}
+			match lexer.next()? {
+				Token::Symbol(Symbol::ParenRight) => {}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "closing parenthesis",
+					found: t,
+				}))
+			}
+
+
+			match lexer.next()? {
+				Token::Symbol(Symbol::CurlyLeft) => {},
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "block",
+					found: t,
+				})),
+			}
+
+			let mut statements = Vec::new();
+
+			loop {
+				if lexer.peek()? == Token::Symbol(Symbol::CurlyRight) {
+					break;
+				}
+				statements.push(parse_statement(lexer)?);
+			}
+			match lexer.next()? {
+				Token::Symbol(Symbol::CurlyRight) => {}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "closing curly bracket",
+					found: t,
+				}))
+			}
+
+			Expression::Function(parameters, statements)
 		}
 		t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
 			expected: "start of expression",
