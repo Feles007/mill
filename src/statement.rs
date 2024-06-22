@@ -122,6 +122,10 @@ pub fn parse_block(lexer: &mut Lexer, bracketed: bool) -> Result<Vec<Statement>,
 	loop {
 		match (bracketed, lexer.peek()?) {
 			(true, Token::Symbol(Symbol::CurlyRight)) | (false, Token::Eof) => break,
+			(true, Token::Eof) => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+				expected: "closing curly bracket",
+				found: Token::Eof,
+			})),
 			_ => {},
 		}
 
