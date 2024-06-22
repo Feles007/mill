@@ -13,7 +13,7 @@ pub enum Statement {
 		initializer: Expression,
 	},
 	Assignment {
-		name: Identifier,
+		lvalue: Expression,
 		value: Expression,
 	},
 	UnusedExpression(Expression),
@@ -64,9 +64,25 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 		}
 		Token::If => {
 			todo!()
-		},
-		
-		_ => todo!()
+		}
+		_ => {
+			let expression = parse_expression(lexer)?;
+			match lexer.peek()? {
+				Token::Symbol(Symbol::Semicolon) => {
+					Statement::UnusedExpression(expression)
+				}
+				Token::Symbol(Symbol::Eq) => {
+					Statement::Assignment {
+						lvalue: expression,
+						value: parse_expression(lexer)?
+					}
+				}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "';' or '='",
+					found: t,
+				}))
+			}
+		}
 	};
 	if expect_semicolon {
 		match lexer.next()? {
