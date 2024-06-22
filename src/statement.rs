@@ -24,8 +24,8 @@ pub enum Statement {
 pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 	let mut expect_semicolon = true;
 	let statement = match lexer.peek()? {
-		Token::Break => Statement::Break,
-		Token::Continue => Statement::Continue,
+		Token::Break => { lexer.next()?; Statement::Break },
+		Token::Continue => { lexer.next()?; Statement::Continue },
 		Token::Return => {
 			lexer.next()?;
 			let value = if lexer.peek()? != Token::Symbol(Symbol::Semicolon) {
@@ -72,6 +72,7 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 					Statement::UnusedExpression(expression)
 				}
 				Token::Symbol(Symbol::Eq) => {
+					lexer.next()?;
 					Statement::Assignment {
 						lvalue: expression,
 						value: parse_expression(lexer)?
