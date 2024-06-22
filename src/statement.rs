@@ -4,9 +4,6 @@ use crate::error::ParseErrorKind;
 use crate::error::ParseError;
 
 #[derive(Debug)]
-pub struct Block(Vec<Statement>);
-
-#[derive(Debug)]
 pub enum Statement {
 	Declaration {
 		name: Identifier,
@@ -95,4 +92,34 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 		}
 	}
 	Ok(statement)
+}
+pub fn parse_block(lexer: &mut Lexer, bracketed: bool) -> Result<Vec<Statement>, ParseError> {
+	if bracketed {match lexer.next()? {
+		Token::Symbol(Symbol::CurlyLeft) => {},
+		t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+			expected: "block",
+			found: t,
+		})),
+	}}
+
+	let mut statements = Vec::new();
+
+	loop {
+		match (bracketed, lexer.peek()?) {
+			(true, Token::Symbol(Symbol::CurlyRight)) |
+			(false, Token::Eof) => break,
+			_ => {}
+		}
+		
+		statements.push(parse_statement(lexer)?);
+	}
+	if bracketed {
+	match lexer.next()? {
+		Token::Symbol(Symbol::CurlyRight) => {}
+		t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+			expected: "closing curly bracket",
+			found: t,
+		}))
+	}}
+	Ok(statements)
 }

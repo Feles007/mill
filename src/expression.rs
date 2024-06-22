@@ -1,7 +1,7 @@
 use crate::lexer::{Lexer, Token, Identifier, Symbol};
 use crate::error::{ParseError, ParseErrorKind};
 use crate::{Float, Integer};
-use crate::statement::{Statement, parse_statement};
+use crate::statement::{Statement, parse_statement, parse_block};
 
 #[derive(Debug)]
 pub enum Expression {
@@ -179,30 +179,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 				}))
 			}
 
-
-			match lexer.next()? {
-				Token::Symbol(Symbol::CurlyLeft) => {},
-				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-					expected: "block",
-					found: t,
-				})),
-			}
-
-			let mut statements = Vec::new();
-
-			loop {
-				if lexer.peek()? == Token::Symbol(Symbol::CurlyRight) {
-					break;
-				}
-				statements.push(parse_statement(lexer)?);
-			}
-			match lexer.next()? {
-				Token::Symbol(Symbol::CurlyRight) => {}
-				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-					expected: "closing curly bracket",
-					found: t,
-				}))
-			}
+			let statements = parse_block(lexer, true)?;
 
 			Expression::Function(parameters, statements)
 		}

@@ -25,7 +25,7 @@ let inc = fn(n) { return n + 1; }(4);
 
 	let mut lexer = lexer::Lexer::new(source);
 
-	match statement::parse_statement(&mut lexer) {
+	match statement::parse_block(&mut lexer, false) {
 		Ok(e) => println!("{e:#?}"),
 		Err(e) => println!("{e}"),
 	}
