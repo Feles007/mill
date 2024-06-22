@@ -3,6 +3,7 @@
 mod error;
 mod lexer;
 mod expression;
+mod statement;
 
 use std::{fmt, io::BufRead};
 
@@ -17,12 +18,14 @@ type Float = f64;
 
 fn main() {
 	let source = r#"
-	"asdaa fn let x = {}"
+
+let f = fn(a) { return a + 1; };
+
 "#;
 
 	let mut lexer = lexer::Lexer::new(source);
 
-	match expression::parse_expression(&mut lexer) {
+	match statement::parse_statement(&mut lexer) {
 		Ok(e) => println!("{e:#?}"),
 		Err(e) => println!("{e}"),
 	}
