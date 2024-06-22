@@ -1,7 +1,9 @@
-use crate::LineNumber;
-use crate::lexer::Token;
-use std::error::Error;
-use std::fmt::{self, Formatter, Display};
+use std::{
+	error::Error,
+	fmt::{self, Display, Formatter},
+};
+
+use crate::{lexer::Token, LineNumber};
 
 #[derive(Debug)]
 pub struct ParseError {
@@ -14,7 +16,7 @@ pub enum ParseErrorKind {
 	// Lexer
 	UnexpectedCharacter(char),
 	NonAsciiByte(u8),
-	
+
 	// Parser
 	UnexpectedToken {
 		expected: &'static str,
@@ -24,22 +26,36 @@ pub enum ParseErrorKind {
 
 impl Display for ParseError {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-		write!(f, "{}:{} - ", self.source_file.as_ref().map(String::as_str).unwrap_or("<source>"), self.line_number)?;
+		write!(
+			f,
+			"{}:{} - ",
+			self.source_file
+				.as_ref()
+				.map(String::as_str)
+				.unwrap_or("<source>"),
+			self.line_number
+		)?;
 
 		let indent = "    ";
 
 		match self.kind {
 			ParseErrorKind::UnexpectedCharacter(c) => {
 				writeln!(f, "Unexpected character '{c}'")?;
-			}
+			},
 			ParseErrorKind::NonAsciiByte(b) => {
 				writeln!(f, "Non ASCII byte: 0x{b:X?}")?;
-				writeln!(f, "{indent}note: This is allowed in comments and string literals");
-			}
-			ParseErrorKind::UnexpectedToken { expected, ref found } => {
+				writeln!(
+					f,
+					"{indent}note: This is allowed in comments and string literals"
+				);
+			},
+			ParseErrorKind::UnexpectedToken {
+				expected,
+				ref found,
+			} => {
 				writeln!(f, "Expected {expected}, found {found}")?;
-			}
-			_ => todo!()
+			},
+			_ => todo!(),
 		}
 
 		Ok(())

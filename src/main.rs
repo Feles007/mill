@@ -1,8 +1,8 @@
 #![allow(unused)]
 
 mod error;
-mod lexer;
 mod expression;
+mod lexer;
 mod statement;
 
 use std::{fmt, io::BufRead};

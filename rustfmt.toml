@@ -1,1 +1,12 @@
 hard_tabs = true
+newline_style = "Unix"
+use_field_init_shorthand = true
+match_block_trailing_comma = true
+
+# Unstable
+unstable_features = true
+
+reorder_impl_items = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
+fn_single_line = true

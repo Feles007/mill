@@ -1,12 +1,16 @@
-use crate::error::{ParseError, ParseErrorKind};
-use crate::{LineNumber, Float, Integer, UInteger};
-use std::fmt::{self, Formatter, Display};
-use std::collections::VecDeque;
-use std::str::{self, FromStr};
+use std::{
+	collections::VecDeque,
+	fmt::{self, Display, Formatter},
+	str::{self, FromStr},
+};
+
+use crate::{
+	error::{ParseError, ParseErrorKind},
+	Float, Integer, LineNumber, UInteger,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Identifier(pub String);
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -42,7 +46,12 @@ pub struct Lexer<'a> {
 
 impl<'a> Lexer<'a> {
 	pub fn new(input: &'a str) -> Self {
-		Lexer { source: input.as_bytes(), current_index: 0, current_token: None, line_number: 1 }
+		Lexer {
+			source: input.as_bytes(),
+			current_index: 0,
+			current_token: None,
+			line_number: 1,
+		}
 	}
 
 	pub fn next(&mut self) -> Result<Token, ParseError> {
@@ -52,12 +61,14 @@ impl<'a> Lexer<'a> {
 			self.parse_token()
 		}
 	}
+
 	pub fn peek(&mut self) -> Result<Token, ParseError> {
 		if let None = self.current_token {
 			self.current_token = Some(self.parse_token()?);
 		}
 		Ok(self.current_token.as_ref().cloned().unwrap())
 	}
+
 	pub fn error(&self, kind: ParseErrorKind) -> ParseError {
 		ParseError {
 			source_file: None,
@@ -65,6 +76,7 @@ impl<'a> Lexer<'a> {
 			kind,
 		}
 	}
+
 	fn parse_token(&mut self) -> Result<Token, ParseError> {
 		let mut token_start = self.current_index;
 		let mut token_end = 1;
@@ -82,48 +94,74 @@ impl<'a> Lexer<'a> {
 					self.line_number += 1;
 					token_start += 1;
 					continue;
-				}
+				},
 				c if c.is_ascii_whitespace() => {
 					token_start += 1;
 					continue;
 				},
 				'#' => {
 					token_start += 1;
-					while self.source.get(token_start).map(|c| *c != b'\n').unwrap_or(false) {
+					while self
+						.source
+						.get(token_start)
+						.map(|c| *c != b'\n')
+						.unwrap_or(false)
+					{
 						token_start += 1;
 					}
 					self.line_number += 1;
 					continue;
-				}
-
+				},
 
 				c if c.is_ascii_digit() => {
-					while self.source.get(token_start + token_end).map(|c| c.is_ascii_digit()).unwrap_or(false) {
+					while self
+						.source
+						.get(token_start + token_end)
+						.map(|c| c.is_ascii_digit())
+						.unwrap_or(false)
+					{
 						token_end += 1;
 					}
 					let mut float = false;
-					if self.source.get(token_start + token_end + 1).is_some() &&
-						self.source[token_start + token_end] == b'.' && self.source[token_start + token_end + 1].is_ascii_digit() {
+					if self.source.get(token_start + token_end + 1).is_some()
+						&& self.source[token_start + token_end] == b'.'
+						&& self.source[token_start + token_end + 1].is_ascii_digit()
+					{
 						token_end += 2;
-						while self.source.get(token_start + token_end).map(|c| c.is_ascii_digit()).unwrap_or(false) {
+						while self
+							.source
+							.get(token_start + token_end)
+							.map(|c| c.is_ascii_digit())
+							.unwrap_or(false)
+						{
 							token_end += 1;
 						}
 						float = true;
 					}
-					let string = &str::from_utf8(&self.source[token_start..(token_start + token_end)]).unwrap();
-					
+					let string =
+						&str::from_utf8(&self.source[token_start..(token_start + token_end)])
+							.unwrap();
+
 					if float {
 						Token::Float(Float::from_str(string).unwrap())
 					} else {
 						Token::Integer(UInteger::from_str(string).unwrap() as Integer)
 					}
-				}
+				},
 				c if c.is_ascii_alphabetic() || c == '_' => {
-					while self.source.get(token_start + token_end).map(|c| c.is_ascii_alphanumeric() || *c == b'_').unwrap_or(false) {
+					while self
+						.source
+						.get(token_start + token_end)
+						.map(|c| c.is_ascii_alphanumeric() || *c == b'_')
+						.unwrap_or(false)
+					{
 						token_end += 1;
 					}
 
-					let identifier = str::from_utf8(&self.source[token_start..(token_start + token_end)]).unwrap().to_owned();
+					let identifier =
+						str::from_utf8(&self.source[token_start..(token_start + token_end)])
+							.unwrap()
+							.to_owned();
 
 					match identifier.as_str() {
 						"true" => Token::True,
@@ -139,37 +177,48 @@ impl<'a> Lexer<'a> {
 						"continue" => Token::Continue,
 						_ => Token::Identifier(Identifier(identifier)),
 					}
-				}
+				},
 				'"' => {
-					while self.source.get(token_start + token_end).map(|c| *c != b'"').unwrap_or(false) {
+					while self
+						.source
+						.get(token_start + token_end)
+						.map(|c| *c != b'"')
+						.unwrap_or(false)
+					{
 						token_end += 1;
 					}
-					let string = str::from_utf8(&self.source[(token_start + 1)..(token_start + token_end)]).unwrap();
+					let string =
+						str::from_utf8(&self.source[(token_start + 1)..(token_start + token_end)])
+							.unwrap();
 					token_end += 1;
 					Token::String(string.to_owned())
-				}
-				
+				},
 
 				':' => Token::Symbol(Symbol::Colon),
 				';' => Token::Symbol(Symbol::Semicolon),
 				',' => Token::Symbol(Symbol::Comma),
 				'.' => Token::Symbol(Symbol::Dot),
-			
+
 				'(' => Token::Symbol(Symbol::ParenLeft),
 				')' => Token::Symbol(Symbol::ParenRight),
 				'{' => Token::Symbol(Symbol::CurlyLeft),
 				'}' => Token::Symbol(Symbol::CurlyRight),
 				'[' => Token::Symbol(Symbol::SquareLeft),
 				']' => Token::Symbol(Symbol::SquareRight),
-			
+
 				'+' => Token::Symbol(Symbol::Add),
 				'-' => Token::Symbol(Symbol::Sub),
 				'*' => Token::Symbol(Symbol::Mul),
 				'/' => Token::Symbol(Symbol::Div),
 				'%' => Token::Symbol(Symbol::Mod),
-			
+
 				'=' | '!' | '<' | '>'
-				if self.source.get(token_start + 1).map(|c| *c == b'=').unwrap_or(false) => {
+					if self
+						.source
+						.get(token_start + 1)
+						.map(|c| *c == b'=')
+						.unwrap_or(false) =>
+				{
 					token_end += 1;
 					match self.source[token_start] as char {
 						'=' => Token::Symbol(Symbol::EqEq),
@@ -178,14 +227,14 @@ impl<'a> Lexer<'a> {
 						'>' => Token::Symbol(Symbol::GtEq),
 						_ => unreachable!(),
 					}
-				}
+				},
 
 				'=' => Token::Symbol(Symbol::Eq),
 				'!' => Token::Symbol(Symbol::No),
 				'<' => Token::Symbol(Symbol::Lt),
 				'>' => Token::Symbol(Symbol::Gt),
 
-				c => return Err(self.error(ParseErrorKind::UnexpectedCharacter(c)))
+				c => return Err(self.error(ParseErrorKind::UnexpectedCharacter(c))),
 			};
 
 			self.current_index = token_start + token_end;
@@ -231,12 +280,14 @@ impl Symbol {
 			_ => return None,
 		})
 	}
+
 	pub fn postfix_bp(self) -> Option<(u8, ())> {
 		Some(match self {
 			Self::SquareLeft | Self::ParenLeft => (11, ()),
 			_ => return None,
 		})
 	}
+
 	pub fn infix_bp(self) -> Option<(u8, u8)> {
 		Some(match self {
 			Self::Add | Self::Sub => (5, 6),
@@ -267,35 +318,39 @@ impl Display for Token {
 			Self::String(s) => write!(f, "string \"{}\"", s),
 
 			Self::Eof => write!(f, "end of file"),
-			
-			Self::Symbol(s) => write!(f, "symbol '{}'", match s {
-				Symbol::Colon => ":",
-				Symbol::Semicolon => ";",
-				Symbol::Comma => ",",
-				Symbol::Dot => ".",
 
-				Symbol::ParenLeft => "(",
-				Symbol::ParenRight => ")",
-				Symbol::CurlyLeft => "{",
-				Symbol::CurlyRight => "}",
-				Symbol::SquareLeft => "[",
-				Symbol::SquareRight => "]",
+			Self::Symbol(s) => write!(
+				f,
+				"symbol '{}'",
+				match s {
+					Symbol::Colon => ":",
+					Symbol::Semicolon => ";",
+					Symbol::Comma => ",",
+					Symbol::Dot => ".",
 
-				Symbol::Add => "+",
-				Symbol::Sub => "-",
-				Symbol::Mul => "*",
-				Symbol::Div => "/",
-				Symbol::Mod => "%",
+					Symbol::ParenLeft => "(",
+					Symbol::ParenRight => ")",
+					Symbol::CurlyLeft => "{",
+					Symbol::CurlyRight => "}",
+					Symbol::SquareLeft => "[",
+					Symbol::SquareRight => "]",
 
-				Symbol::EqEq => "==",
-				Symbol::Eq => "=",
-				Symbol::NoEq => "!=",
-				Symbol::No => "!",
-				Symbol::LtEq => "<=",
-				Symbol::Lt => "<",
-				Symbol::GtEq => ">=",
-				Symbol::Gt => ">",
-			})
+					Symbol::Add => "+",
+					Symbol::Sub => "-",
+					Symbol::Mul => "*",
+					Symbol::Div => "/",
+					Symbol::Mod => "%",
+
+					Symbol::EqEq => "==",
+					Symbol::Eq => "=",
+					Symbol::NoEq => "!=",
+					Symbol::No => "!",
+					Symbol::LtEq => "<=",
+					Symbol::Lt => "<",
+					Symbol::GtEq => ">=",
+					Symbol::Gt => ">",
+				}
+			),
 		}
 	}
 }
