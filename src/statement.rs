@@ -18,6 +18,9 @@ pub enum Statement {
 	Return(Expression),
 	Break,
 	Continue,
+	Loop {
+		body: Vec<Statement>,
+	},
 }
 pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 	let mut expect_semicolon = true;
@@ -38,6 +41,13 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 				Expression::Null
 			};
 			Statement::Return(value)
+		},
+		Token::Loop => {
+			lexer.next()?;
+			expect_semicolon = false;
+			Statement::Loop {
+				body: parse_block(lexer, true)?,
+			}
 		},
 		Token::Let => {
 			lexer.next()?;
