@@ -34,6 +34,7 @@ pub enum Token {
 	Continue,
 	For,
 	In,
+	While,
 
 	Eof,
 }
@@ -179,6 +180,7 @@ impl<'a> Lexer<'a> {
 						"continue" => Token::Continue,
 						"for" => Token::For,
 						"in" => Token::In,
+						"while" => Token::While,
 						_ => Token::Identifier(Identifier(identifier)),
 					}
 				},
@@ -341,6 +343,7 @@ impl Display for Token {
 			Self::Continue => write!(f, "keyword 'continue'"),
 			Self::For => write!(f, "keyword 'for'"),
 			Self::In => write!(f, "keyword 'in'"),
+			Self::While => write!(f, "keyword 'while'"),
 
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
 			Self::Integer(n) => write!(f, "integer '{}'", n),

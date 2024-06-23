@@ -26,11 +26,18 @@ pub enum Statement {
 		iterator: Expression,
 		body: Vec<Statement>,
 	},
+	While {
+		condition: Expression,
+		body: Vec<Statement>,
+	},
 	If {
 		condition: Expression,
 		body: Vec<Statement>,
 		else_ifs: Vec<(Expression, Vec<Statement>)>,
 		else_body: Vec<Statement>,
+	},
+	Block {
+		body: Vec<Statement>,
 	},
 }
 pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
@@ -143,6 +150,14 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			let body = parse_block(lexer, true)?;
 
 			Statement::For { loop_var, iterator, body }
+		}
+		Token::While => {
+			lexer.next()?;
+			expect_semicolon = false;
+
+			let condition = parse_expression(lexer)?;
+			let body = parse_block(lexer, true)?;
+			Statement::While { condition, body }
 		}
 		_ => {
 			let expression = parse_expression(lexer)?;
