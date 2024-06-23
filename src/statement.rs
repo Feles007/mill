@@ -21,6 +21,12 @@ pub enum Statement {
 	Loop {
 		body: Vec<Statement>,
 	},
+	If {
+		condition: Expression,
+		body: Vec<Statement>,
+		else_ifs: Vec<(Expression, Vec<Statement>)>,
+		else_body: Vec<Statement>,
+	},
 }
 pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 	let mut expect_semicolon = true;
@@ -79,7 +85,33 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			Statement::Declaration { name, initializer }
 		},
 		Token::If => {
-			todo!()
+			lexer.next()?;
+			expect_semicolon = false;
+			let condition = parse_expression(lexer)?;
+			let body = parse_block(lexer, true)?;
+
+			let mut else_ifs = Vec::new();
+			let mut else_body = Vec::new();
+
+			while lexer.peek()? == Token::Else {
+				lexer.next()?;
+				if lexer.peek()? == Token::If {
+					lexer.next()?;
+					let condition = parse_expression(lexer)?;
+					let body = parse_block(lexer, true)?;
+					else_ifs.push((condition, body));
+				} else {
+					else_body = parse_block(lexer, true)?;
+					break;
+				}
+			}
+
+			Statement::If {
+				condition,
+				body,
+				else_ifs,
+				else_body,
+			}
 		},
 		_ => {
 			let expression = parse_expression(lexer)?;
