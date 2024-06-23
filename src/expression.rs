@@ -39,6 +39,9 @@ pub enum Expression {
 	Index(Box<Expression>, Box<Expression>),
 	Call(Box<Expression>, Vec<Expression>),
 	Member(Box<Expression>, Box<Expression>),
+
+	And(Box<Expression>, Box<Expression>),
+	Or(Box<Expression>, Box<Expression>),
 }
 
 pub fn parse_expression(lexer: &mut Lexer) -> Result<Expression, ParseError> {
@@ -310,6 +313,9 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 					Symbol::LtEq => Expression::LtEq(lhs, rhs),
 					Symbol::Gt => Expression::Gt(lhs, rhs),
 					Symbol::GtEq => Expression::GtEq(lhs, rhs),
+
+					Symbol::And => Expression::And(lhs, rhs),
+					Symbol::Or => Expression::Or(lhs, rhs),
 
 					_ => unimplemented!(),
 				}

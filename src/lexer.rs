@@ -234,6 +234,25 @@ impl<'a> Lexer<'a> {
 				'<' => Token::Symbol(Symbol::Lt),
 				'>' => Token::Symbol(Symbol::Gt),
 
+				'&' if self
+					.source
+					.get(token_start + 1)
+					.map(|c| *c == b'&')
+					.unwrap_or(false) =>
+				{
+					token_end += 1;
+					Token::Symbol(Symbol::And)
+				},
+				'|' if self
+					.source
+					.get(token_start + 1)
+					.map(|c| *c == b'|')
+					.unwrap_or(false) =>
+				{
+					token_end += 1;
+					Token::Symbol(Symbol::Or)
+				},
+
 				c => return Err(self.error(ParseErrorKind::UnexpectedCharacter(c))),
 			};
 
@@ -272,28 +291,32 @@ pub enum Symbol {
 	Lt,
 	GtEq,
 	Gt,
+
+	And,
+	Or,
 }
 impl Symbol {
 	pub fn prefix_bp(self) -> Option<((), u8)> {
 		Some(match self {
-			Self::Add | Self::Sub => ((), 7),
+			Self::Add | Self::Sub => ((), 9),
 			_ => return None,
 		})
 	}
 
 	pub fn postfix_bp(self) -> Option<(u8, ())> {
 		Some(match self {
-			Self::SquareLeft | Self::ParenLeft => (8, ()),
+			Self::SquareLeft | Self::ParenLeft => (10, ()),
 			_ => return None,
 		})
 	}
 
 	pub fn infix_bp(self) -> Option<(u8, u8)> {
 		Some(match self {
-			Self::EqEq | Self::NoEq | Self::Lt | Self::LtEq | Self::Gt | Self::GtEq => (1, 2),
-			Self::Add | Self::Sub => (3, 4),
-			Self::Mul | Self::Div | Self::Mod => (5, 6),
-			Self::Dot => (10, 9),
+			Self::And | Self::Or => (1, 2),
+			Self::EqEq | Self::NoEq | Self::Lt | Self::LtEq | Self::Gt | Self::GtEq => (3, 4),
+			Self::Add | Self::Sub => (5, 6),
+			Self::Mul | Self::Div | Self::Mod => (7, 8),
+			Self::Dot => (12, 11),
 			_ => return None,
 		})
 	}
@@ -350,6 +373,9 @@ impl Display for Token {
 					Symbol::Lt => "<",
 					Symbol::GtEq => ">=",
 					Symbol::Gt => ">",
+
+					Symbol::And => "&&",
+					Symbol::Or => "||",
 				}
 			),
 		}
