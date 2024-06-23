@@ -19,7 +19,42 @@ type Float = f64;
 fn main() {
 	let source = r#"
 
-let inc = fn(n) { return n + 1; }(4);
+let x = 0;
+let y = 1;
+let z = x + y;
+
+loop {
+	print(x);
+	x = y;
+	y = z;
+	z = x + y;
+
+	if z > 255 && y != 0 {
+		break;
+	}
+}
+
+let m = {["bop"]: "asd"};
+
+for _ in {} {}
+
+for pair in std.map.kv(m) {
+	let k = pair.k;
+	let v = pair.v;
+
+	assert(m[k] == v);
+}
+
+let cond = true;
+while cond {
+	let f = fn (a) { return a * 3; };
+	if f(3) == 9 {
+		cond = false;
+	}
+	{
+		let x = 3;
+	}
+}
 
 "#;
 
