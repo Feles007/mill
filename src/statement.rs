@@ -159,6 +159,12 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			let body = parse_block(lexer, true)?;
 			Statement::While { condition, body }
 		}
+		Token::Symbol(Symbol::CurlyLeft) => {
+			expect_semicolon = false;
+			Statement::Block {
+				body: parse_block(lexer, true)?,
+			}	
+		}
 		_ => {
 			let expression = parse_expression(lexer)?;
 			match lexer.peek()? {
