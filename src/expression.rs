@@ -29,6 +29,13 @@ pub enum Expression {
 	Div(Box<Expression>, Box<Expression>),
 	Mod(Box<Expression>, Box<Expression>),
 
+	Eq(Box<Expression>, Box<Expression>),
+	NotEq(Box<Expression>, Box<Expression>),
+	Lt(Box<Expression>, Box<Expression>),
+	LtEq(Box<Expression>, Box<Expression>),
+	Gt(Box<Expression>, Box<Expression>),
+	GtEq(Box<Expression>, Box<Expression>),
+
 	Index(Box<Expression>, Box<Expression>),
 	Call(Box<Expression>, Vec<Expression>),
 	Member(Box<Expression>, Box<Expression>),
@@ -297,7 +304,14 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 
 					Symbol::Dot => Expression::Member(lhs, rhs),
 
-					_ => unreachable!(),
+					Symbol::EqEq => Expression::Eq(lhs, rhs),
+					Symbol::NoEq => Expression::NotEq(lhs, rhs),
+					Symbol::Lt => Expression::Lt(lhs, rhs),
+					Symbol::LtEq => Expression::LtEq(lhs, rhs),
+					Symbol::Gt => Expression::Gt(lhs, rhs),
+					Symbol::GtEq => Expression::GtEq(lhs, rhs),
+
+					_ => unimplemented!(),
 				}
 			};
 			continue;

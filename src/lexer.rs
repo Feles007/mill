@@ -276,23 +276,24 @@ pub enum Symbol {
 impl Symbol {
 	pub fn prefix_bp(self) -> Option<((), u8)> {
 		Some(match self {
-			Self::Add | Self::Sub => ((), 9),
+			Self::Add | Self::Sub => ((), 7),
 			_ => return None,
 		})
 	}
 
 	pub fn postfix_bp(self) -> Option<(u8, ())> {
 		Some(match self {
-			Self::SquareLeft | Self::ParenLeft => (11, ()),
+			Self::SquareLeft | Self::ParenLeft => (8, ()),
 			_ => return None,
 		})
 	}
 
 	pub fn infix_bp(self) -> Option<(u8, u8)> {
 		Some(match self {
-			Self::Add | Self::Sub => (5, 6),
-			Self::Mul | Self::Div | Self::Mod => (7, 8),
-			Self::Dot => (14, 13),
+			Self::EqEq | Self::NoEq | Self::Lt | Self::LtEq | Self::Gt | Self::GtEq => (1, 2),
+			Self::Add | Self::Sub => (3, 4),
+			Self::Mul | Self::Div | Self::Mod => (5, 6),
+			Self::Dot => (10, 9),
 			_ => return None,
 		})
 	}
