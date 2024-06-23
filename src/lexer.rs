@@ -32,6 +32,8 @@ pub enum Token {
 	Loop,
 	Break,
 	Continue,
+	For,
+	In,
 
 	Eof,
 }
@@ -175,6 +177,8 @@ impl<'a> Lexer<'a> {
 						"loop" => Token::Loop,
 						"break" => Token::Break,
 						"continue" => Token::Continue,
+						"for" => Token::For,
+						"in" => Token::In,
 						_ => Token::Identifier(Identifier(identifier)),
 					}
 				},
@@ -324,17 +328,19 @@ impl Symbol {
 impl Display for Token {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
 		match self {
-			Self::True => write!(f, "true"),
-			Self::False => write!(f, "false"),
-			Self::Null => write!(f, "null"),
-			Self::Fn => write!(f, "fn"),
-			Self::Return => write!(f, "return"),
-			Self::Let => write!(f, "let"),
-			Self::If => write!(f, "if"),
-			Self::Else => write!(f, "else"),
-			Self::Loop => write!(f, "loop"),
-			Self::Break => write!(f, "break"),
-			Self::Continue => write!(f, "continue"),
+			Self::True => write!(f, "keyword 'true'"),
+			Self::False => write!(f, "keyword 'false'"),
+			Self::Null => write!(f, "keyword 'null'"),
+			Self::Fn => write!(f, "keyword 'fn'"),
+			Self::Return => write!(f, "keyword 'return'"),
+			Self::Let => write!(f, "keyword 'let'"),
+			Self::If => write!(f, "keyword 'if'"),
+			Self::Else => write!(f, "keyword 'else'"),
+			Self::Loop => write!(f, "keyword 'loop'"),
+			Self::Break => write!(f, "keyword 'break'"),
+			Self::Continue => write!(f, "keyword 'continue'"),
+			Self::For => write!(f, "keyword 'for'"),
+			Self::In => write!(f, "keyword 'in'"),
 
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
 			Self::Integer(n) => write!(f, "integer '{}'", n),

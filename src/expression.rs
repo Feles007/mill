@@ -109,7 +109,11 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			loop {
 				let key;
 				match lexer.next()? {
-					Token::Eof | Token::Symbol(Symbol::CurlyRight) => break,
+					Token::Eof => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "closing curly bracket",
+						found: Token::Eof,
+					})),
+					Token::Symbol(Symbol::CurlyRight) => break,
 					Token::Identifier(i) => {
 						key = Expression::String(i.0);
 					},
@@ -147,18 +151,15 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 					Token::Symbol(Symbol::Comma) => {
 						lexer.next()?;
 					},
-					_ => break,
-				}
-			}
-
-			match lexer.next()? {
-				Token::Symbol(Symbol::CurlyRight) => {},
-				t => {
-					return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-						expected: "closing curly bracket",
+					Token::Symbol(Symbol::CurlyRight) => {
+						lexer.next()?;
+						break;
+					}
+					t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "comma or closing curly bracket",
 						found: t,
-					}))
-				},
+					})),
+				}
 			}
 
 			Expression::Map(initializers)

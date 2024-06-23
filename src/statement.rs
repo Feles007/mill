@@ -21,6 +21,11 @@ pub enum Statement {
 	Loop {
 		body: Vec<Statement>,
 	},
+	For {
+		loop_var: Identifier, 
+		iterator: Expression,
+		body: Vec<Statement>,
+	},
 	If {
 		condition: Expression,
 		body: Vec<Statement>,
@@ -113,6 +118,32 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 				else_body,
 			}
 		},
+		Token::For => {
+			lexer.next()?;
+			expect_semicolon = false;
+
+			let loop_var = match lexer.next()? {
+				Token::Identifier(i) => i,
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "identifier",
+					found: t,
+				}))
+			};
+
+			match lexer.next()? {
+				Token::In => {}
+				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+					expected: "keyword 'in'",
+					found: t,
+				}))
+			}
+
+			let iterator = parse_expression(lexer)?;
+
+			let body = parse_block(lexer, true)?;
+
+			Statement::For { loop_var, iterator, body }
+		}
 		_ => {
 			let expression = parse_expression(lexer)?;
 			match lexer.peek()? {
