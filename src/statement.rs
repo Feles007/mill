@@ -22,7 +22,7 @@ pub enum Statement {
 		body: Vec<Statement>,
 	},
 	For {
-		loop_var: Identifier, 
+		loop_var: Identifier,
 		iterator: Expression,
 		body: Vec<Statement>,
 	},
@@ -131,26 +131,34 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 
 			let loop_var = match lexer.next()? {
 				Token::Identifier(i) => i,
-				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-					expected: "identifier",
-					found: t,
-				}))
+				t => {
+					return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "identifier",
+						found: t,
+					}))
+				},
 			};
 
 			match lexer.next()? {
-				Token::In => {}
-				t => return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-					expected: "keyword 'in'",
-					found: t,
-				}))
+				Token::In => {},
+				t => {
+					return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+						expected: "keyword 'in'",
+						found: t,
+					}))
+				},
 			}
 
 			let iterator = parse_expression(lexer)?;
 
 			let body = parse_block(lexer, true)?;
 
-			Statement::For { loop_var, iterator, body }
-		}
+			Statement::For {
+				loop_var,
+				iterator,
+				body,
+			}
+		},
 		Token::While => {
 			lexer.next()?;
 			expect_semicolon = false;
@@ -158,13 +166,13 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			let condition = parse_expression(lexer)?;
 			let body = parse_block(lexer, true)?;
 			Statement::While { condition, body }
-		}
+		},
 		Token::Symbol(Symbol::CurlyLeft) => {
 			expect_semicolon = false;
 			Statement::Block {
 				body: parse_block(lexer, true)?,
-			}	
-		}
+			}
+		},
 		_ => {
 			let expression = parse_expression(lexer)?;
 			match lexer.peek()? {
