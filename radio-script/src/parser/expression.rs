@@ -1,7 +1,7 @@
 use crate::parser::{
 	error::{ParseError, ParseErrorKind},
 	lexer::{Identifier, Lexer, Symbol, Token},
-	statement::{parse_block, parse_statement, Statement},
+	statement::{parse_block, Statement},
 	Float, Integer,
 };
 

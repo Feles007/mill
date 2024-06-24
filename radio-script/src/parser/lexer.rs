@@ -1,5 +1,4 @@
 use std::{
-	collections::VecDeque,
 	fmt::{self, Display, Formatter},
 	str::{self, FromStr},
 };

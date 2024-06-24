@@ -47,7 +47,7 @@ impl Display for ParseError {
 				writeln!(
 					f,
 					"{indent}note: This is allowed in comments and string literals"
-				);
+				)?;
 			},
 			ParseErrorKind::UnexpectedToken {
 				expected,
@@ -55,7 +55,6 @@ impl Display for ParseError {
 			} => {
 				writeln!(f, "Expected {expected}, found {found}")?;
 			},
-			_ => todo!(),
 		}
 
 		Ok(())
