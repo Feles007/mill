@@ -1,11 +1,7 @@
-#![allow(unused)]
-
-mod error;
-mod expression;
-mod lexer;
-mod statement;
-
-use std::{fmt, io::BufRead};
+pub mod error;
+pub mod expression;
+pub mod lexer;
+pub mod statement;
 
 type LineNumber = usize;
 type Integer = i32;
@@ -16,13 +12,7 @@ type Integer = i32;
 type UInteger = u32;
 type Float = f64;
 
-fn main() {
-	let source = std::fs::read_to_string("test.radio").unwrap();
-
-	let mut lexer = lexer::Lexer::new(&source);
-
-	match statement::parse_file(&mut lexer) {
-		Ok(e) => println!("{e:#?}"),
-		Err(e) => println!("{e}"),
-	}
+pub fn parse<Source: AsRef<str>>(source: Source) -> Result<Vec<statement::Statement>, error::ParseError> {
+	let mut lexer = lexer::Lexer::new(source.as_ref());
+	statement::parse_file(&mut lexer)
 }

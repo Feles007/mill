@@ -1,6 +1,3 @@
-[package]
-name = "radio-script-rs"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
+[workspace]
+members = ["radio-script", "cli"]
+resolver = "2"

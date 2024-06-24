@@ -4,7 +4,7 @@ use std::{
 	str::{self, FromStr},
 };
 
-use crate::{
+use crate::parser::{
 	error::{ParseError, ParseErrorKind},
 	Float, Integer, LineNumber, UInteger,
 };

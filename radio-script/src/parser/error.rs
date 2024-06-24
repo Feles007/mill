@@ -3,7 +3,7 @@ use std::{
 	fmt::{self, Display, Formatter},
 };
 
-use crate::{lexer::Token, LineNumber};
+use crate::parser::{lexer::Token, LineNumber};
 
 #[derive(Debug)]
 pub struct ParseError {

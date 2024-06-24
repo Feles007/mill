@@ -1,4 +1,4 @@
-use crate::{
+use crate::parser::{
 	error::{ParseError, ParseErrorKind},
 	expression::{parse_expression, Expression},
 	lexer::{Identifier, Lexer, Symbol, Token},
