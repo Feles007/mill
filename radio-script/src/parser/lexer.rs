@@ -58,18 +58,16 @@ impl<'a> Lexer<'a> {
 
 	#[allow(clippy::should_implement_trait)]
 	pub fn next(&mut self) -> Result<Token, ParseError> {
-		if let Some(token) = self.current_token.take() {
-			Ok(token)
-		} else {
-			self.parse_token()
-		}
+		self.current_token
+			.take()
+			.map_or_else(|| self.parse_token(), Ok)
 	}
 
 	pub fn peek(&mut self) -> Result<Token, ParseError> {
 		if self.current_token.is_none() {
 			self.current_token = Some(self.parse_token()?);
 		}
-		Ok(self.current_token.as_ref().cloned().unwrap())
+		Ok(self.current_token.clone().unwrap())
 	}
 
 	pub fn error(&self, kind: ParseErrorKind) -> ParseError {
@@ -104,12 +102,7 @@ impl<'a> Lexer<'a> {
 				},
 				'#' => {
 					token_start += 1;
-					while self
-						.source
-						.get(token_start)
-						.map(|c| *c != b'\n')
-						.unwrap_or(false)
-					{
+					while self.source.get(token_start).is_some_and(|c| *c != b'\n') {
 						token_start += 1;
 					}
 					self.line_number += 1;
@@ -120,26 +113,24 @@ impl<'a> Lexer<'a> {
 					while self
 						.source
 						.get(token_start + token_end)
-						.map(|c| c.is_ascii_digit())
-						.unwrap_or(false)
+						.is_some_and(u8::is_ascii_digit)
 					{
 						token_end += 1;
 					}
-					let mut float = false;
-					if self.source.get(token_start + token_end + 1).is_some()
+
+					let float = self.source.get(token_start + token_end + 1).is_some()
 						&& self.source[token_start + token_end] == b'.'
-						&& self.source[token_start + token_end + 1].is_ascii_digit()
-					{
+						&& self.source[token_start + token_end + 1].is_ascii_digit();
+
+					if float {
 						token_end += 2;
 						while self
 							.source
 							.get(token_start + token_end)
-							.map(|c| c.is_ascii_digit())
-							.unwrap_or(false)
+							.is_some_and(u8::is_ascii_digit)
 						{
 							token_end += 1;
 						}
-						float = true;
 					}
 					let string =
 						&str::from_utf8(&self.source[token_start..(token_start + token_end)])
@@ -148,15 +139,14 @@ impl<'a> Lexer<'a> {
 					if float {
 						Token::Float(Float::from_str(string).unwrap())
 					} else {
-						Token::Integer(UInteger::from_str(string).unwrap() as Integer)
+						Token::Integer(i32::try_from(UInteger::from_str(string).unwrap()).unwrap())
 					}
 				},
 				c if c.is_ascii_alphabetic() || c == '_' => {
 					while self
 						.source
 						.get(token_start + token_end)
-						.map(|c| c.is_ascii_alphanumeric() || *c == b'_')
-						.unwrap_or(false)
+						.is_some_and(|c| c.is_ascii_alphanumeric() || *c == b'_')
 					{
 						token_end += 1;
 					}
@@ -188,8 +178,7 @@ impl<'a> Lexer<'a> {
 					while self
 						.source
 						.get(token_start + token_end)
-						.map(|c| *c != b'"')
-						.unwrap_or(false)
+						.is_some_and(|c| *c != b'"')
 					{
 						token_end += 1;
 					}
@@ -219,11 +208,7 @@ impl<'a> Lexer<'a> {
 				'%' => Token::Symbol(Symbol::Mod),
 
 				'=' | '!' | '<' | '>'
-					if self
-						.source
-						.get(token_start + 1)
-						.map(|c| *c == b'=')
-						.unwrap_or(false) =>
+					if self.source.get(token_start + 1).is_some_and(|c| *c == b'=') =>
 				{
 					token_end += 1;
 					match self.source[token_start] as char {
@@ -240,21 +225,11 @@ impl<'a> Lexer<'a> {
 				'<' => Token::Symbol(Symbol::Lt),
 				'>' => Token::Symbol(Symbol::Gt),
 
-				'&' if self
-					.source
-					.get(token_start + 1)
-					.map(|c| *c == b'&')
-					.unwrap_or(false) =>
-				{
+				'&' if self.source.get(token_start + 1).is_some_and(|c| *c == b'&') => {
 					token_end += 1;
 					Token::Symbol(Symbol::And)
 				},
-				'|' if self
-					.source
-					.get(token_start + 1)
-					.map(|c| *c == b'|')
-					.unwrap_or(false) =>
-				{
+				'|' if self.source.get(token_start + 1).is_some_and(|c| *c == b'|') => {
 					token_end += 1;
 					Token::Symbol(Symbol::Or)
 				},
@@ -346,9 +321,9 @@ impl Display for Token {
 			Self::While => write!(f, "keyword 'while'"),
 
 			Self::Identifier(i) => write!(f, "identifier '{}'", i.0),
-			Self::Integer(n) => write!(f, "integer '{}'", n),
-			Self::Float(n) => write!(f, "float '{}'", n),
-			Self::String(s) => write!(f, "string \"{}\"", s),
+			Self::Integer(n) => write!(f, "integer '{n}'"),
+			Self::Float(n) => write!(f, "float '{n}'"),
+			Self::String(s) => write!(f, "string \"{s}\""),
 
 			Self::Eof => write!(f, "end of file"),
 

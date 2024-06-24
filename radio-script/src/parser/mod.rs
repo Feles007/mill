@@ -12,7 +12,9 @@ type Integer = i32;
 type UInteger = u32;
 type Float = f64;
 
-pub fn parse<Source: AsRef<str>>(source: Source) -> Result<Vec<statement::Statement>, error::ParseError> {
+pub fn parse<Source: AsRef<str>>(
+	source: Source,
+) -> Result<Vec<statement::Statement>, error::ParseError> {
 	let mut lexer = lexer::Lexer::new(source.as_ref());
 	statement::parse_file(&mut lexer)
 }

@@ -29,9 +29,7 @@ impl Display for ParseError {
 		write!(
 			f,
 			"{}:{} - ",
-			self.source_file
-				.as_deref()
-				.unwrap_or("<source>"),
+			self.source_file.as_deref().unwrap_or("<source>"),
 			self.line_number
 		)?;
 

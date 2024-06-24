@@ -53,10 +53,10 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 		},
 		Token::Return => {
 			lexer.next()?;
-			let value = if lexer.peek()? != Token::Symbol(Symbol::Semicolon) {
-				parse_expression(lexer)?
-			} else {
+			let value = if lexer.peek()? == Token::Symbol(Symbol::Semicolon) {
 				Expression::Null
+			} else {
+				parse_expression(lexer)?
 			};
 			Statement::Return(value)
 		},
@@ -249,7 +249,9 @@ pub fn parse_file(lexer: &mut Lexer) -> Result<Vec<Statement>, ParseError> {
 	let mut statements = Vec::new();
 
 	loop {
-		if lexer.peek()? == Token::Eof { break; }
+		if lexer.peek()? == Token::Eof {
+			break;
+		}
 
 		statements.push(parse_statement(lexer)?);
 	}
