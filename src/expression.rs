@@ -218,7 +218,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 				},
 			}
 
-			let statements = parse_block(lexer, true)?;
+			let statements = parse_block(lexer)?;
 
 			Expression::Function(parameters, statements)
 		},

@@ -21,7 +21,7 @@ fn main() {
 
 	let mut lexer = lexer::Lexer::new(&source);
 
-	match statement::parse_block(&mut lexer, false) {
+	match statement::parse_file(&mut lexer) {
 		Ok(e) => println!("{e:#?}"),
 		Err(e) => println!("{e}"),
 	}

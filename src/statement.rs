@@ -64,7 +64,7 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			lexer.next()?;
 			expect_semicolon = false;
 			Statement::Loop {
-				body: parse_block(lexer, true)?,
+				body: parse_block(lexer)?,
 			}
 		},
 		Token::Let => {
@@ -100,7 +100,7 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			lexer.next()?;
 			expect_semicolon = false;
 			let condition = parse_expression(lexer)?;
-			let body = parse_block(lexer, true)?;
+			let body = parse_block(lexer)?;
 
 			let mut else_ifs = Vec::new();
 			let mut else_body = Vec::new();
@@ -110,10 +110,10 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 				if lexer.peek()? == Token::If {
 					lexer.next()?;
 					let condition = parse_expression(lexer)?;
-					let body = parse_block(lexer, true)?;
+					let body = parse_block(lexer)?;
 					else_ifs.push((condition, body));
 				} else {
-					else_body = parse_block(lexer, true)?;
+					else_body = parse_block(lexer)?;
 					break;
 				}
 			}
@@ -151,7 +151,7 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 
 			let iterator = parse_expression(lexer)?;
 
-			let body = parse_block(lexer, true)?;
+			let body = parse_block(lexer)?;
 
 			Statement::For {
 				loop_var,
@@ -164,13 +164,13 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			expect_semicolon = false;
 
 			let condition = parse_expression(lexer)?;
-			let body = parse_block(lexer, true)?;
+			let body = parse_block(lexer)?;
 			Statement::While { condition, body }
 		},
 		Token::Symbol(Symbol::CurlyLeft) => {
 			expect_semicolon = false;
 			Statement::Block {
-				body: parse_block(lexer, true)?,
+				body: parse_block(lexer)?,
 			}
 		},
 		_ => {
@@ -206,25 +206,23 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 	}
 	Ok(statement)
 }
-pub fn parse_block(lexer: &mut Lexer, bracketed: bool) -> Result<Vec<Statement>, ParseError> {
-	if bracketed {
-		match lexer.next()? {
-			Token::Symbol(Symbol::CurlyLeft) => {},
-			t => {
-				return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-					expected: "block",
-					found: t,
-				}))
-			},
-		}
+pub fn parse_block(lexer: &mut Lexer) -> Result<Vec<Statement>, ParseError> {
+	match lexer.next()? {
+		Token::Symbol(Symbol::CurlyLeft) => {},
+		t => {
+			return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+				expected: "block",
+				found: t,
+			}))
+		},
 	}
 
 	let mut statements = Vec::new();
 
 	loop {
-		match (bracketed, lexer.peek()?) {
-			(true, Token::Symbol(Symbol::CurlyRight)) | (false, Token::Eof) => break,
-			(true, Token::Eof) => {
+		match lexer.peek()? {
+			Token::Symbol(Symbol::CurlyRight) => break,
+			Token::Eof => {
 				return Err(lexer.error(ParseErrorKind::UnexpectedToken {
 					expected: "closing curly bracket",
 					found: Token::Eof,
@@ -235,16 +233,29 @@ pub fn parse_block(lexer: &mut Lexer, bracketed: bool) -> Result<Vec<Statement>,
 
 		statements.push(parse_statement(lexer)?);
 	}
-	if bracketed {
-		match lexer.next()? {
-			Token::Symbol(Symbol::CurlyRight) => {},
-			t => {
-				return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-					expected: "closing curly bracket",
-					found: t,
-				}))
-			},
-		}
+	match lexer.next()? {
+		Token::Symbol(Symbol::CurlyRight) => {},
+		t => {
+			return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+				expected: "closing curly bracket",
+				found: t,
+			}))
+		},
 	}
+
+	Ok(statements)
+}
+pub fn parse_file(lexer: &mut Lexer) -> Result<Vec<Statement>, ParseError> {
+	let mut statements = Vec::new();
+
+	loop {
+		match lexer.peek()? {
+			Token::Eof => break,
+			_ => {},
+		}
+
+		statements.push(parse_statement(lexer)?);
+	}
+
 	Ok(statements)
 }
