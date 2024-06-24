@@ -1,7 +1,7 @@
-pub mod error;
-pub mod expression;
-pub mod lexer;
-pub mod statement;
+mod error;
+mod expression;
+mod lexer;
+mod statement;
 
 type LineNumber = usize;
 type Integer = i32;
@@ -11,6 +11,11 @@ type Integer = i32;
 // step on the AST after parsing.
 type UInteger = u32;
 type Float = f64;
+
+pub use error::ParseError;
+pub use statement::Statement;
+pub use expression::Expression;
+pub use lexer::Identifier;
 
 pub fn parse<Source: AsRef<str>>(
 	source: Source,
