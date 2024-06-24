@@ -56,6 +56,7 @@ impl<'a> Lexer<'a> {
 		}
 	}
 
+	#[allow(clippy::should_implement_trait)]
 	pub fn next(&mut self) -> Result<Token, ParseError> {
 		if let Some(token) = self.current_token.take() {
 			Ok(token)
@@ -65,7 +66,7 @@ impl<'a> Lexer<'a> {
 	}
 
 	pub fn peek(&mut self) -> Result<Token, ParseError> {
-		if let None = self.current_token {
+		if self.current_token.is_none() {
 			self.current_token = Some(self.parse_token()?);
 		}
 		Ok(self.current_token.as_ref().cloned().unwrap())

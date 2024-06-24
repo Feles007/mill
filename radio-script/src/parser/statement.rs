@@ -249,10 +249,7 @@ pub fn parse_file(lexer: &mut Lexer) -> Result<Vec<Statement>, ParseError> {
 	let mut statements = Vec::new();
 
 	loop {
-		match lexer.peek()? {
-			Token::Eof => break,
-			_ => {},
-		}
+		if lexer.peek()? == Token::Eof { break; }
 
 		statements.push(parse_statement(lexer)?);
 	}

@@ -30,8 +30,7 @@ impl Display for ParseError {
 			f,
 			"{}:{} - ",
 			self.source_file
-				.as_ref()
-				.map(String::as_str)
+				.as_deref()
 				.unwrap_or("<source>"),
 			self.line_number
 		)?;
