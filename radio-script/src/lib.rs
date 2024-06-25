@@ -8,3 +8,4 @@
 #![allow(clippy::missing_const_for_fn)]
 
 pub mod parser;
+pub mod passes;
