@@ -13,14 +13,14 @@ pub struct ParseError {
 }
 #[derive(Debug)]
 pub enum ParseErrorKind {
-	// Lexer
 	UnexpectedCharacter(char),
 	NonAsciiByte(u8),
-
-	// Parser
 	UnexpectedToken {
 		expected: &'static str,
 		found: Token,
+	},
+	InvalidIntegerLiteral {
+		message: String,
 	},
 }
 
@@ -33,8 +33,6 @@ impl Display for ParseError {
 			self.line_number
 		)?;
 
-		let indent = "    ";
-
 		match self.kind {
 			ParseErrorKind::UnexpectedCharacter(c) => {
 				writeln!(f, "Unexpected character '{c}'")?;
@@ -43,7 +41,7 @@ impl Display for ParseError {
 				writeln!(f, "Non ASCII byte: 0x{b:X?}")?;
 				writeln!(
 					f,
-					"{indent}note: This is allowed in comments and string literals"
+					"    note: This is allowed in comments and string literals"
 				)?;
 			},
 			ParseErrorKind::UnexpectedToken {
@@ -51,6 +49,13 @@ impl Display for ParseError {
 				ref found,
 			} => {
 				writeln!(f, "Expected {expected}, found {found}")?;
+			},
+			ParseErrorKind::InvalidIntegerLiteral { ref message } => {
+				writeln!(f, "{message}")?;
+				writeln!(
+					f,
+					"    note: integer literals must be in the range [-2147483648, 2147483647]"
+				)?;
 			},
 		}
 

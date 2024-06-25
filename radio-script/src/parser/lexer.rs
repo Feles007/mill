@@ -1,11 +1,12 @@
 use std::{
 	fmt::{self, Display, Formatter},
+	num::IntErrorKind,
 	str::{self, FromStr},
 };
 
 use crate::parser::{
 	error::{ParseError, ParseErrorKind},
-	Float, Integer, LineNumber, UInteger,
+	Float, Integer, LineNumber,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -109,7 +110,13 @@ impl<'a> Lexer<'a> {
 					continue;
 				},
 
-				c if c.is_ascii_digit() => {
+				c if (c.is_ascii_digit())
+					|| (c == '-'
+						&& self
+							.source
+							.get(token_start + 1)
+							.is_some_and(u8::is_ascii_digit)) =>
+				{
 					while self
 						.source
 						.get(token_start + token_end)
@@ -139,7 +146,23 @@ impl<'a> Lexer<'a> {
 					if float {
 						Token::Float(Float::from_str(string).unwrap())
 					} else {
-						Token::Integer(i32::try_from(UInteger::from_str(string).unwrap()).unwrap())
+						let i = match Integer::from_str(string) {
+							Ok(i) => i,
+							Err(e) => match e.kind() {
+								IntErrorKind::PosOverflow => {
+									return Err(self.error(ParseErrorKind::InvalidIntegerLiteral {
+										message: format!("Integer literal too large ({string})"),
+									}))
+								},
+								IntErrorKind::NegOverflow => {
+									return Err(self.error(ParseErrorKind::InvalidIntegerLiteral {
+										message: format!("Integer literal too small ({string})"),
+									}))
+								},
+								e => unimplemented!("{e:?}"),
+							},
+						};
+						Token::Integer(i)
 					}
 				},
 				c if c.is_ascii_alphabetic() || c == '_' => {
