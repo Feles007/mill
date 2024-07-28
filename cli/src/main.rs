@@ -1,8 +1,18 @@
 fn main() {
 	let source = std::fs::read_to_string("test.radio").unwrap();
 
-	match radio_script::parser::parse(source) {
-		Ok(e) => println!("{e:#?}"),
-		Err(e) => println!("{e}"),
+	let ast = match radio_script::parser::parse(source) {
+		Ok(a) => a,
+		Err(e) => {
+			println!("{e}");
+			return;
+		},
+	};
+
+	match radio_script::interpreter::interpret(ast) {
+		Ok(()) => {},
+		Err(e) => {
+			println!("{e}");
+		},
 	}
 }
