@@ -1,5 +1,5 @@
 use crate::{
-	ast::{Expression, Statement},
+	ast::{BinaryOperation, Expression, Lvalue, Statement},
 	parser::{
 		error::{ParseError, ParseErrorKind},
 		expression::parse_expression,
@@ -145,9 +145,10 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 			match lexer.peek()? {
 				Token::Symbol(Symbol::Semicolon) => Statement::UnusedExpression(expression),
 				Token::Symbol(Symbol::Eq) => {
+					let lvalue = try_as_lvalue(expression, lexer)?;
 					lexer.next()?;
 					Statement::Assignment {
-						lvalue: expression,
+						lvalue,
 						value: parse_expression(lexer)?,
 					}
 				},
@@ -224,4 +225,12 @@ pub fn parse_file(lexer: &mut Lexer) -> Result<Vec<Statement>, ParseError> {
 	}
 
 	Ok(statements)
+}
+fn try_as_lvalue(expression: Expression, lexer: &mut Lexer) -> Result<Lvalue, ParseError> {
+	Ok(match expression {
+		Expression::Identifier(i) => Lvalue::Identifier(i),
+		Expression::Member(e, m) => Lvalue::Member(e, m),
+		Expression::BinaryOperation(ei, BinaryOperation::Index) => Lvalue::Index(ei),
+		_ => return Err(lexer.error(ParseErrorKind::ExpressionNotAssignable)),
+	})
 }

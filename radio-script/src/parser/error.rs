@@ -15,6 +15,7 @@ pub struct ParseError {
 pub enum ParseErrorKind {
 	UnexpectedCharacter(char),
 	NonAsciiByte(u8),
+	ExpressionNotAssignable,
 	UnexpectedToken {
 		expected: &'static str,
 		found: Token,
@@ -56,6 +57,9 @@ impl Display for ParseError {
 					f,
 					"    note: integer literals must be in the range [-2147483648, 2147483647]"
 				)?;
+			},
+			ParseErrorKind::ExpressionNotAssignable => {
+				writeln!(f, "Expression not assignable")?;
 			},
 		}
 

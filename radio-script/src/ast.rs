@@ -11,7 +11,7 @@ pub enum Statement {
 		initializer: Expression,
 	},
 	Assignment {
-		lvalue: Expression,
+		lvalue: Lvalue,
 		value: Expression,
 	},
 	UnusedExpression(Expression),
@@ -64,6 +64,13 @@ pub enum Expression {
 	// Normal operations
 	UnaryOperation(Box<Expression>, UnaryOperation),
 	BinaryOperation(Box<[Expression; 2]>, BinaryOperation),
+}
+
+#[derive(Debug)]
+pub enum Lvalue {
+	Identifier(Identifier),
+	Member(Box<Expression>, Identifier),
+	Index(Box<[Expression; 2]>),
 }
 
 #[derive(Debug)]
