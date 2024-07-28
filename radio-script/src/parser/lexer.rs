@@ -4,13 +4,13 @@ use std::{
 	str::{self, FromStr},
 };
 
-use crate::parser::{
-	error::{ParseError, ParseErrorKind},
-	Float, Integer, LineNumber,
+use crate::{
+	ast::{Float, Identifier, Integer},
+	parser::{
+		error::{ParseError, ParseErrorKind},
+		LineNumber,
+	},
 };
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Identifier(pub String);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {

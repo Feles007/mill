@@ -1,45 +1,12 @@
-use crate::parser::{
-	error::{ParseError, ParseErrorKind},
-	expression::{parse_expression, Expression},
-	lexer::{Identifier, Lexer, Symbol, Token},
+use crate::{
+	ast::{Expression, Statement},
+	parser::{
+		error::{ParseError, ParseErrorKind},
+		expression::parse_expression,
+		lexer::{Lexer, Symbol, Token},
+	},
 };
 
-#[derive(Debug)]
-pub enum Statement {
-	Declaration {
-		name: Identifier,
-		initializer: Expression,
-	},
-	Assignment {
-		lvalue: Expression,
-		value: Expression,
-	},
-	UnusedExpression(Expression),
-	Return(Expression),
-	Break,
-	Continue,
-	Loop {
-		body: Vec<Statement>,
-	},
-	For {
-		loop_var: Identifier,
-		iterator: Expression,
-		body: Vec<Statement>,
-	},
-	While {
-		condition: Expression,
-		body: Vec<Statement>,
-	},
-	If {
-		condition: Expression,
-		body: Vec<Statement>,
-		else_ifs: Vec<(Expression, Vec<Statement>)>,
-		else_body: Vec<Statement>,
-	},
-	Block {
-		body: Vec<Statement>,
-	},
-}
 pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 	let mut expect_semicolon = true;
 	let statement = match lexer.peek()? {

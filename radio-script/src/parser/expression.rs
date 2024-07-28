@@ -1,48 +1,11 @@
-use crate::parser::{
-	error::{ParseError, ParseErrorKind},
-	lexer::{Identifier, Lexer, Symbol, Token},
-	statement::{parse_block, Statement},
-	Float, Integer,
+use crate::{
+	ast::{BinaryOperation, Expression},
+	parser::{
+		error::{ParseError, ParseErrorKind},
+		lexer::{Lexer, Symbol, Token},
+		statement::parse_block,
+	},
 };
-
-#[derive(Debug)]
-pub enum Expression {
-	True,
-	False,
-	Null,
-
-	Identifier(Identifier),
-	Integer(Integer),
-	Float(Float),
-	String(String),
-	Array(Vec<Expression>),
-	Map(Vec<(Expression, Expression)>),
-
-	Function(Vec<Identifier>, Vec<Statement>),
-
-	Identity(Box<Expression>),
-	Not(Box<Expression>),
-
-	Add(Box<Expression>, Box<Expression>),
-	Sub(Box<Expression>, Box<Expression>),
-	Mul(Box<Expression>, Box<Expression>),
-	Div(Box<Expression>, Box<Expression>),
-	Mod(Box<Expression>, Box<Expression>),
-
-	Eq(Box<Expression>, Box<Expression>),
-	NotEq(Box<Expression>, Box<Expression>),
-	Lt(Box<Expression>, Box<Expression>),
-	LtEq(Box<Expression>, Box<Expression>),
-	Gt(Box<Expression>, Box<Expression>),
-	GtEq(Box<Expression>, Box<Expression>),
-
-	Index(Box<Expression>, Box<Expression>),
-	Call(Box<Expression>, Vec<Expression>),
-	Member(Box<Expression>, Box<Expression>),
-
-	And(Box<Expression>, Box<Expression>),
-	Or(Box<Expression>, Box<Expression>),
-}
 
 pub fn parse_expression(lexer: &mut Lexer) -> Result<Expression, ParseError> {
 	parse_expression_bp(lexer, 0)
@@ -172,6 +135,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			let ((), r_bp) = op.prefix_bp().unwrap();
 			let rhs = parse_expression_bp(lexer, r_bp)?;
 			match op {
+				// TODO: Remove identity
 				Symbol::Add => Expression::Identity(Box::new(rhs)),
 				Symbol::Sub => Expression::Not(Box::new(rhs)),
 				_ => unimplemented!(),
@@ -260,7 +224,7 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 							}))
 						},
 					}
-					Expression::Index(Box::new(lhs), Box::new(rhs))
+					Expression::BinaryOperation(Box::new([lhs, rhs]), BinaryOperation::Index)
 				},
 				Symbol::ParenLeft => {
 					let mut arguments = Vec::new();
@@ -300,29 +264,43 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			lexer.next()?;
 
 			lhs = {
-				let rhs = parse_expression_bp(lexer, r_bp)?;
-				let lhs = Box::new(lhs);
-				let rhs = Box::new(rhs);
-				match op {
-					Symbol::Add => Expression::Add(lhs, rhs),
-					Symbol::Sub => Expression::Sub(lhs, rhs),
-					Symbol::Mul => Expression::Mul(lhs, rhs),
-					Symbol::Div => Expression::Div(lhs, rhs),
-					Symbol::Mod => Expression::Mod(lhs, rhs),
+				use BinaryOperation as B;
+				use Symbol as S;
 
-					Symbol::Dot => Expression::Member(lhs, rhs),
+				if op == S::Dot {
+					let member = match lexer.next()? {
+						Token::Identifier(i) => i,
+						t => {
+							return Err(lexer.error(ParseErrorKind::UnexpectedToken {
+								expected: "identifier",
+								found: t,
+							}))
+						},
+					};
+					Expression::Member(Box::new(lhs), member)
+				} else {
+					let rhs = parse_expression_bp(lexer, r_bp)?;
+					let operands = Box::new([lhs, rhs]);
+					let operator = match op {
+						S::Add => B::Add,
+						S::Sub => B::Sub,
+						S::Mul => B::Mul,
+						S::Div => B::Div,
+						S::Mod => B::Mod,
 
-					Symbol::EqEq => Expression::Eq(lhs, rhs),
-					Symbol::NoEq => Expression::NotEq(lhs, rhs),
-					Symbol::Lt => Expression::Lt(lhs, rhs),
-					Symbol::LtEq => Expression::LtEq(lhs, rhs),
-					Symbol::Gt => Expression::Gt(lhs, rhs),
-					Symbol::GtEq => Expression::GtEq(lhs, rhs),
+						S::EqEq => B::Eq,
+						S::NoEq => B::NoEq,
+						S::Lt => B::Lt,
+						S::LtEq => B::LtEq,
+						S::Gt => B::Gt,
+						S::GtEq => B::GtEq,
 
-					Symbol::And => Expression::And(lhs, rhs),
-					Symbol::Or => Expression::Or(lhs, rhs),
+						S::And => B::And,
+						S::Or => B::Or,
 
-					_ => unimplemented!(),
+						_ => unimplemented!(),
+					};
+					Expression::BinaryOperation(operands, operator)
 				}
 			};
 			continue;

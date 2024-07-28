@@ -7,5 +7,5 @@
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_const_for_fn)]
 
+pub mod ast;
 pub mod parser;
-pub mod passes;
