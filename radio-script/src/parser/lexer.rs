@@ -302,7 +302,7 @@ pub enum Symbol {
 impl Symbol {
 	pub fn prefix_bp(self) -> Option<((), u8)> {
 		Some(match self {
-			Self::Add | Self::Sub => ((), 9),
+			Self::Sub | Self::No => ((), 9),
 			_ => return None,
 		})
 	}

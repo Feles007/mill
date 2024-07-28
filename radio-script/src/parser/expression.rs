@@ -1,5 +1,5 @@
 use crate::{
-	ast::{BinaryOperation, Expression},
+	ast::{BinaryOperation, Expression, UnaryOperation},
 	parser::{
 		error::{ParseError, ParseErrorKind},
 		lexer::{Lexer, Symbol, Token},
@@ -134,12 +134,12 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 		Token::Symbol(op) if op.prefix_bp().is_some() => {
 			let ((), r_bp) = op.prefix_bp().unwrap();
 			let rhs = parse_expression_bp(lexer, r_bp)?;
-			match op {
-				// TODO: Remove identity
-				Symbol::Add => Expression::Identity(Box::new(rhs)),
-				Symbol::Sub => Expression::Not(Box::new(rhs)),
+			let operator = match op {
+				Symbol::No => UnaryOperation::Not,
+				Symbol::Sub => UnaryOperation::Neg,
 				_ => unimplemented!(),
-			}
+			};
+			Expression::UnaryOperation(Box::new(rhs), operator)
 		},
 		Token::Fn => {
 			match lexer.next()? {

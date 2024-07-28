@@ -34,3 +34,11 @@ while cond {
 		let x = 3;
 	}
 }
+
+if x == 3 && y != 199 {
+	do_something();
+}
+if x != 9 {}
+if (a && b) || (!c) {
+	
+}

@@ -43,10 +43,12 @@ pub enum Statement {
 
 #[derive(Debug)]
 pub enum Expression {
+	// Keyword literals
 	True,
 	False,
 	Null,
 
+	// Literals
 	Identifier(Identifier),
 	Integer(Integer),
 	Float(Float),
@@ -54,15 +56,20 @@ pub enum Expression {
 	Array(Vec<Expression>),
 	Map(Vec<(Expression, Expression)>),
 
+	// Special stuff
 	Function(Vec<Identifier>, Vec<Statement>),
-
-	Identity(Box<Expression>),
-	Not(Box<Expression>),
-
-	BinaryOperation(Box<[Expression; 2]>, BinaryOperation),
-
 	Call(Box<Expression>, Vec<Expression>),
 	Member(Box<Expression>, Identifier),
+
+	// Normal operations
+	UnaryOperation(Box<Expression>, UnaryOperation),
+	BinaryOperation(Box<[Expression; 2]>, BinaryOperation),
+}
+
+#[derive(Debug)]
+pub enum UnaryOperation {
+	Neg,
+	Not,
 }
 
 #[derive(Debug)]
