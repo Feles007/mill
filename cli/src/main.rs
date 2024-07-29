@@ -12,7 +12,7 @@ fn main() {
 	match radio_script::interpreter::interpret(ast) {
 		Ok(()) => {},
 		Err(e) => {
-			println!("{e}");
+			println!("{e:?}");
 		},
 	}
 }

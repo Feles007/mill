@@ -1,10 +1,34 @@
+use std::collections::HashMap;
+
+use crate::{
+	ast::{Expression, Identifier},
+	interpreter::{error::InterpreterError, value::Value},
+};
+
 #[derive(Debug)]
 pub struct State {
-	stack: Vec<StackFrame>,
+	pub stack: Vec<Scope>,
 }
 impl State {
 	pub fn new() -> Self { Self { stack: Vec::new() } }
+
+	pub fn push(&mut self) { self.stack.push(Scope::new()); }
+
+	pub fn current_scope(&mut self) -> &mut Scope {
+		let len = self.stack.len();
+		&mut self.stack[len - 1]
+	}
 }
 
 #[derive(Debug)]
-pub struct StackFrame {}
+pub struct Scope {
+	pub variables: HashMap<Identifier, Value>,
+}
+
+impl Scope {
+	pub fn new() -> Self {
+		Self {
+			variables: HashMap::new(),
+		}
+	}
+}

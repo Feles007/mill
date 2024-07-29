@@ -1,1 +1,2 @@
-let x = 3;
+let x = 22;
+let y = x;

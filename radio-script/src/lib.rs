@@ -6,6 +6,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![warn(clippy::nursery)]
 #![allow(clippy::missing_const_for_fn)]
+#![allow(unused)]
 
 pub mod ast;
 pub mod interpreter;
