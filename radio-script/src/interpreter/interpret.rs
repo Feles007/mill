@@ -1,5 +1,5 @@
 use crate::{
-	ast::{Ast, Expression, Statement},
+	ast::{Ast, Expression, Identifier, Lvalue, Statement},
 	interpreter::{
 		error::InterpreterError,
 		state::{Scope, State},
@@ -27,8 +27,15 @@ fn interpret_statement(state: &mut State, statement: Statement) -> Result<(), In
 
 			state.current_scope().variables.insert(name, value);
 		},
-		Statement::Assignment { lvalue, value } => todo!(),
-		Statement::UnusedExpression(expression) => evaluate_expression(state, expression)?,
+		Statement::Assignment { lvalue, value } => {
+			let value = evaluate_expression(state, value)?;
+			let lvalue: &mut Value = match lvalue {
+				Lvalue::Identifier(identifier) => lookup_mut(state, &identifier)?,
+				_ => todo!(),
+			};
+			*lvalue = value;
+		},
+		Statement::UnusedExpression(expression) => _ = evaluate_expression(state, expression)?,
 		Statement::Return(expression) => todo!(),
 		Statement::Break => todo!(),
 		Statement::Continue => todo!(),
@@ -58,14 +65,7 @@ fn evaluate_expression(
 		Expression::False => Value::False,
 		Expression::Null => Value::Null,
 
-		Expression::Identifier(identifier) => {
-			for scope in state.stack.iter().rev() {
-				if let Some(value) = scope.variables.get(&identifier) {
-					return Ok(value.clone());
-				}
-			}
-			return Err(InterpreterError::UnknownIdentifier);
-		},
+		Expression::Identifier(identifier) => lookup(state, &identifier)?.clone(),
 		Expression::Integer(integer) => Value::Integer(integer),
 		Expression::Float(float) => Value::Float(float),
 		Expression::String(string) => Value::String(string),
@@ -84,4 +84,23 @@ fn evaluate_expression(
 		Expression::UnaryOperation(operand, unary_operation) => todo!(),
 		Expression::BinaryOperation(operands, binary_operation) => todo!(),
 	})
+}
+fn lookup<'a>(state: &'a State, identifier: &Identifier) -> Result<&'a Value, InterpreterError> {
+	for scope in state.stack.iter().rev() {
+		if let Some(value) = scope.variables.get(identifier) {
+			return Ok(value);
+		}
+	}
+	Err(InterpreterError::UnknownIdentifier)
+}
+fn lookup_mut<'a>(
+	state: &'a mut State,
+	identifier: &Identifier,
+) -> Result<&'a mut Value, InterpreterError> {
+	for scope in state.stack.iter_mut().rev() {
+		if let Some(value) = scope.variables.get_mut(identifier) {
+			return Ok(value);
+		}
+	}
+	Err(InterpreterError::UnknownIdentifier)
 }
