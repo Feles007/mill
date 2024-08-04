@@ -2,8 +2,7 @@ use crate::ast::{Float, Integer};
 
 #[derive(Debug, Clone)]
 pub enum Value {
-	True,
-	False,
+	Bool(bool),
 	Null,
 
 	Integer(Integer),

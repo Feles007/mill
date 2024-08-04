@@ -1,5 +1,5 @@
 use crate::{
-	ast::{Ast, Expression, Identifier, Lvalue, Statement},
+	ast::{Ast, BinaryOperation, Expression, Identifier, Lvalue, Statement, UnaryOperation},
 	interpreter::{
 		error::InterpreterError,
 		state::{Scope, State},
@@ -61,8 +61,8 @@ fn evaluate_expression(
 	expression: Expression,
 ) -> Result<Value, InterpreterError> {
 	Ok(match expression {
-		Expression::True => Value::True,
-		Expression::False => Value::False,
+		Expression::True => Value::Bool(true),
+		Expression::False => Value::Bool(false),
 		Expression::Null => Value::Null,
 
 		Expression::Identifier(identifier) => lookup(state, &identifier)?.clone(),
@@ -81,8 +81,15 @@ fn evaluate_expression(
 		Expression::Call(function, arguments) => todo!(),
 		Expression::Member(value, member) => todo!(),
 
-		Expression::UnaryOperation(operand, unary_operation) => todo!(),
-		Expression::BinaryOperation(operands, binary_operation) => todo!(),
+		Expression::UnaryOperation(operand, operation) => {
+			unary_operation(evaluate_expression(state, *operand)?, operation)?
+		},
+		Expression::BinaryOperation(operands, operation) => {
+			let [lhs, rhs] = *operands;
+			let lhs = evaluate_expression(state, lhs)?;
+			let rhs = evaluate_expression(state, rhs)?;
+			binary_operation(lhs, rhs, operation)?
+		},
 	})
 }
 fn lookup<'a>(state: &'a State, identifier: &Identifier) -> Result<&'a Value, InterpreterError> {
@@ -103,4 +110,71 @@ fn lookup_mut<'a>(
 		}
 	}
 	Err(InterpreterError::UnknownIdentifier)
+}
+fn unary_operation(operand: Value, operation: UnaryOperation) -> Result<Value, InterpreterError> {
+	Ok(match (operand, operation) {
+		(Value::Bool(true), UnaryOperation::Not) => Value::Bool(false),
+		(Value::Bool(false), UnaryOperation::Not) => Value::Bool(true),
+
+		(Value::Integer(i), UnaryOperation::Neg) => Value::Integer(-i),
+		(Value::Float(f), UnaryOperation::Neg) => Value::Float(-f),
+
+		_ => return Err(InterpreterError::UnsupportedOperation),
+	})
+}
+fn binary_operation(
+	lhs: Value,
+	rhs: Value,
+	operation: BinaryOperation,
+) -> Result<Value, InterpreterError> {
+	use BinaryOperation as O;
+	use Value as V;
+
+	Ok(match (lhs, rhs, operation) {
+		//
+		// Integer ops
+		//
+		(V::Integer(lhs), V::Integer(rhs), O::Add) => V::Integer(lhs + rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::Sub) => V::Integer(lhs - rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::Mul) => V::Integer(lhs * rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::Div) => V::Integer(lhs / rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::Mod) => V::Integer(lhs % rhs),
+
+		//
+		// Float ops
+		//
+		(V::Float(lhs), V::Float(rhs), O::Add) => V::Float(lhs + rhs),
+		(V::Float(lhs), V::Float(rhs), O::Sub) => V::Float(lhs - rhs),
+		(V::Float(lhs), V::Float(rhs), O::Mul) => V::Float(lhs * rhs),
+		(V::Float(lhs), V::Float(rhs), O::Div) => V::Float(lhs / rhs),
+
+		//
+		// Comparison ops
+		//
+		(V::Integer(lhs), V::Integer(rhs), O::Eq) => V::Bool(lhs == rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::NoEq) => V::Bool(lhs != rhs),
+
+		(V::Integer(lhs), V::Integer(rhs), O::Lt) => V::Bool(lhs < rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::LtEq) => V::Bool(lhs <= rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::Gt) => V::Bool(lhs > rhs),
+		(V::Integer(lhs), V::Integer(rhs), O::GtEq) => V::Bool(lhs >= rhs),
+
+		(V::Float(lhs), V::Float(rhs), O::Lt) => V::Bool(lhs < rhs),
+		(V::Float(lhs), V::Float(rhs), O::LtEq) => V::Bool(lhs <= rhs),
+		(V::Float(lhs), V::Float(rhs), O::Gt) => V::Bool(lhs > rhs),
+		(V::Float(lhs), V::Float(rhs), O::GtEq) => V::Bool(lhs >= rhs),
+
+		//
+		// Bool ops
+		//
+		(V::Bool(lhs), V::Bool(rhs), O::And) => V::Bool(lhs && rhs),
+		(V::Bool(lhs), V::Bool(rhs), O::Or) => V::Bool(lhs || rhs),
+
+		//
+		// Index
+		//
+		(_, _, O::Index) => todo!(),
+
+		_ => return Err(InterpreterError::UnsupportedOperation),
+	})
 }

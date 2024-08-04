@@ -1,3 +1,9 @@
-let x = 3;
-x = 4;
-x = 9;
+let x1 = 13.5;
+let y1 = -8.4;
+let mag2_1 = (x1 * x1) + (y1 * y1);
+
+let x2 = -4.8;
+let y2 = -17.2;
+let mag2_2 = (x2 * x2) + (y2 * y2);
+
+let condition = mag2_1 > mag2_2;
