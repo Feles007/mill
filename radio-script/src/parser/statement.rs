@@ -89,9 +89,7 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 				}
 			}
 
-			Statement::If {
-				branches
-			}
+			Statement::If { branches }
 		},
 		Token::For => {
 			lexer.next()?;

@@ -34,3 +34,11 @@ impl Scope {
 		}
 	}
 }
+
+#[derive(Debug)]
+pub enum ControlFlow {
+	Normal,
+	Break,
+	Continue,
+	Return(Value),
+}

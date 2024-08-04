@@ -2,7 +2,7 @@ use crate::{
 	ast::{Ast, BinaryOperation, Expression, Identifier, Lvalue, Statement, UnaryOperation},
 	interpreter::{
 		error::InterpreterError,
-		state::{Scope, State},
+		state::{ControlFlow, Scope, State},
 		value::Value,
 	},
 };
@@ -11,12 +11,18 @@ pub fn interpret(ast: Ast) -> Result<(), InterpreterError> {
 	let mut state = State::new();
 	state.push();
 	for statement in ast.0 {
-		interpret_statement(&mut state, statement)?;
+		match interpret_statement(&mut state, statement)? {
+			ControlFlow::Normal => {},
+			c => panic!("Upward control flow reached top level"),
+		}
 	}
 	dbg!(state);
 	Ok(())
 }
-fn interpret_statement(state: &mut State, statement: Statement) -> Result<(), InterpreterError> {
+fn interpret_statement(
+	state: &mut State,
+	statement: Statement,
+) -> Result<ControlFlow, InterpreterError> {
 	match statement {
 		Statement::Declaration { name, initializer } => {
 			if state.current_scope().variables.contains_key(&name) {
@@ -39,13 +45,14 @@ fn interpret_statement(state: &mut State, statement: Statement) -> Result<(), In
 		Statement::Block { body } => {
 			state.push();
 			for statement in body {
-				interpret_statement(state, statement)?;
+				match interpret_statement(state, statement)? {
+					ControlFlow::Normal => {},
+					c => return Ok(c),
+				}
 			}
 			state.pop();
 		},
-		Statement::If {
-			branches
-		} => {
+		Statement::If { branches } => {
 			for (condition, body) in branches {
 				let condition = match evaluate_expression(state, condition)? {
 					Value::Bool(b) => b,
@@ -54,25 +61,70 @@ fn interpret_statement(state: &mut State, statement: Statement) -> Result<(), In
 				if condition {
 					state.push();
 					for statement in body {
-						interpret_statement(state, statement)?;
+						match interpret_statement(state, statement)? {
+							ControlFlow::Normal => {},
+							c => {
+								state.pop();
+								return Ok(c);
+							},
+						}
 					}
 					state.pop();
 					break;
 				}
 			}
 		},
-		Statement::Return(expression) => todo!(),
-		Statement::Break => todo!(),
-		Statement::Continue => todo!(),
-		Statement::Loop { body } => todo!(),
+		Statement::Return(expression) => return Ok(ControlFlow::Return(evaluate_expression(state, expression)?)),
+		Statement::Break => return Ok(ControlFlow::Break),
+		Statement::Continue => return Ok(ControlFlow::Continue),
+		Statement::Loop { body } => {
+			let start_len = state.stack.len();
+			'main_loop: loop {
+				let local_body = body.clone();
+				state.push();
+				for statement in local_body {
+					match interpret_statement(state, statement)? {
+						ControlFlow::Normal => {},
+						ControlFlow::Return(e) => return Ok(ControlFlow::Return(e)),
+						ControlFlow::Break => break 'main_loop,
+						ControlFlow::Continue => break,
+					}
+				}
+				state.pop();
+			}
+			state.pop();
+			assert_eq!(start_len, state.stack.len());
+		},
+		Statement::While { condition, body } => {
+			let start_len = state.stack.len();
+			'main_loop: loop {
+				let local_condition = condition.clone();
+				let local_condition = match evaluate_expression(state, local_condition)? {
+					Value::Bool(b) => b,
+					_ => return Err(InterpreterError::ExpectedBool),
+				};
+				let local_body = body.clone();
+
+				state.push();
+				for statement in local_body {
+					match interpret_statement(state, statement)? {
+						ControlFlow::Normal => {},
+						ControlFlow::Return(e) => return Ok(ControlFlow::Return(e)),
+						ControlFlow::Break => break 'main_loop,
+						ControlFlow::Continue => break,
+					}
+				}
+				state.pop();
+			}
+			assert_eq!(start_len, state.stack.len());
+		},
 		Statement::For {
 			loop_var,
 			iterator,
 			body,
 		} => todo!(),
-		Statement::While { condition, body } => todo!(),
 	}
-	Ok(())
+	Ok(ControlFlow::Normal)
 }
 fn evaluate_expression(
 	state: &mut State,

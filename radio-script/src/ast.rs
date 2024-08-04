@@ -1,10 +1,10 @@
 pub type Integer = i32;
 pub type Float = f64;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ast(pub(crate) Vec<Statement>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
 	Declaration {
 		name: Identifier,
@@ -38,7 +38,7 @@ pub enum Statement {
 	},
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
 	// Keyword literals
 	True,
@@ -63,20 +63,20 @@ pub enum Expression {
 	BinaryOperation(Box<[Expression; 2]>, BinaryOperation),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Lvalue {
 	Identifier(Identifier),
 	Member(Box<Expression>, Identifier),
 	Index(Box<[Expression; 2]>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum UnaryOperation {
 	Neg,
 	Not,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum BinaryOperation {
 	Add,
 	Sub,
