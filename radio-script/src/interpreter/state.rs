@@ -14,6 +14,8 @@ impl State {
 
 	pub fn push(&mut self) { self.stack.push(Scope::new()); }
 
+	pub fn pop(&mut self) { self.stack.pop().unwrap(); }
+
 	pub fn current_scope(&mut self) -> &mut Scope {
 		let len = self.stack.len();
 		&mut self.stack[len - 1]

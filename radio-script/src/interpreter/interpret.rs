@@ -36,6 +36,31 @@ fn interpret_statement(state: &mut State, statement: Statement) -> Result<(), In
 			*lvalue = value;
 		},
 		Statement::UnusedExpression(expression) => _ = evaluate_expression(state, expression)?,
+		Statement::Block { body } => {
+			state.push();
+			for statement in body {
+				interpret_statement(state, statement)?;
+			}
+			state.pop();
+		},
+		Statement::If {
+			branches
+		} => {
+			for (condition, body) in branches {
+				let condition = match evaluate_expression(state, condition)? {
+					Value::Bool(b) => b,
+					_ => return Err(InterpreterError::ExpectedBool),
+				};
+				if condition {
+					state.push();
+					for statement in body {
+						interpret_statement(state, statement)?;
+					}
+					state.pop();
+					break;
+				}
+			}
+		},
 		Statement::Return(expression) => todo!(),
 		Statement::Break => todo!(),
 		Statement::Continue => todo!(),
@@ -46,13 +71,6 @@ fn interpret_statement(state: &mut State, statement: Statement) -> Result<(), In
 			body,
 		} => todo!(),
 		Statement::While { condition, body } => todo!(),
-		Statement::If {
-			condition,
-			body,
-			else_ifs,
-			else_body,
-		} => todo!(),
-		Statement::Block { body } => todo!(),
 	}
 	Ok(())
 }

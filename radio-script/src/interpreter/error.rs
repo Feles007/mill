@@ -3,4 +3,5 @@ pub enum InterpreterError {
 	Redeclaration,
 	UnknownIdentifier,
 	UnsupportedOperation,
+	ExpectedBool,
 }

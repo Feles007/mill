@@ -66,11 +66,15 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 		Token::If => {
 			lexer.next()?;
 			expect_semicolon = false;
-			let condition = parse_expression(lexer)?;
-			let body = parse_block(lexer)?;
 
-			let mut else_ifs = Vec::new();
-			let mut else_body = Vec::new();
+			let mut branches = Vec::new();
+
+			{
+				let condition = parse_expression(lexer)?;
+				let body = parse_block(lexer)?;
+
+				branches.push((condition, body));
+			}
 
 			while lexer.peek()? == Token::Else {
 				lexer.next()?;
@@ -78,18 +82,15 @@ pub fn parse_statement(lexer: &mut Lexer) -> Result<Statement, ParseError> {
 					lexer.next()?;
 					let condition = parse_expression(lexer)?;
 					let body = parse_block(lexer)?;
-					else_ifs.push((condition, body));
+					branches.push((condition, body));
 				} else {
-					else_body = parse_block(lexer)?;
+					branches.push((Expression::True, parse_block(lexer)?));
 					break;
 				}
 			}
 
 			Statement::If {
-				condition,
-				body,
-				else_ifs,
-				else_body,
+				branches
 			}
 		},
 		Token::For => {

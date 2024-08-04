@@ -31,10 +31,7 @@ pub enum Statement {
 		body: Vec<Statement>,
 	},
 	If {
-		condition: Expression,
-		body: Vec<Statement>,
-		else_ifs: Vec<(Expression, Vec<Statement>)>,
-		else_body: Vec<Statement>,
+		branches: Vec<(Expression, Vec<Statement>)>,
 	},
 	Block {
 		body: Vec<Statement>,

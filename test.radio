@@ -1,9 +1,11 @@
-let x1 = 13.5;
-let y1 = -8.4;
-let mag2_1 = (x1 * x1) + (y1 * y1);
+let result;
 
-let x2 = -4.8;
-let y2 = -17.2;
-let mag2_2 = (x2 * x2) + (y2 * y2);
-
-let condition = mag2_1 > mag2_2;
+if 1 > 8 {
+	result = 1;
+} else if 3 == 4 {
+	result = 2;
+} else if 9 > 22 {
+	result = 3;
+} else {
+	result = 4;
+}
