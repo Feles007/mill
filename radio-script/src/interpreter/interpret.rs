@@ -54,9 +54,8 @@ fn interpret_statement(
 		},
 		Statement::If { branches } => {
 			for (condition, body) in branches {
-				let condition = match evaluate_expression(state, condition)? {
-					Value::Bool(b) => b,
-					_ => return Err(InterpreterError::ExpectedBool),
+				let Value::Bool(condition) = evaluate_expression(state, condition)? else {
+					return Err(InterpreterError::ExpectedBool);
 				};
 				if condition {
 					state.push();
@@ -74,7 +73,9 @@ fn interpret_statement(
 				}
 			}
 		},
-		Statement::Return(expression) => return Ok(ControlFlow::Return(evaluate_expression(state, expression)?)),
+		Statement::Return(expression) => {
+			return Ok(ControlFlow::Return(evaluate_expression(state, expression)?))
+		},
 		Statement::Break => return Ok(ControlFlow::Break),
 		Statement::Continue => return Ok(ControlFlow::Continue),
 		Statement::Loop { body } => {
@@ -99,9 +100,9 @@ fn interpret_statement(
 			let start_len = state.stack.len();
 			'main_loop: loop {
 				let local_condition = condition.clone();
-				let local_condition = match evaluate_expression(state, local_condition)? {
-					Value::Bool(b) => b,
-					_ => return Err(InterpreterError::ExpectedBool),
+				let Value::Bool(local_condition) = evaluate_expression(state, local_condition)?
+				else {
+					return Err(InterpreterError::ExpectedBool);
 				};
 				let local_body = body.clone();
 
