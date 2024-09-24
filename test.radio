@@ -1,4 +1,14 @@
-let x = 0;
-loop {
-	x = x + 1;
+# Mill
+{
+	let x = 0;
+	let y = - 3;
+	loop {
+		x = x + 1;
+
+		if x > 10 {
+			break;
+		}
+	}
 }
+
+let f = fn() {};
