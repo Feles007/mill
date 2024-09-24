@@ -110,13 +110,7 @@ impl<'a> Lexer<'a> {
 					continue;
 				},
 
-				c if (c.is_ascii_digit())
-					|| (c == '-'
-						&& self
-							.source
-							.get(token_start + 1)
-							.is_some_and(u8::is_ascii_digit)) =>
-				{
+				c if c.is_ascii_digit() => {
 					while self
 						.source
 						.get(token_start + token_end)
