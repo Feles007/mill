@@ -13,7 +13,7 @@ pub fn interpret(ast: Ast) -> Result<(), InterpreterError> {
 	for statement in ast.0 {
 		match interpret_statement(&mut state, statement)? {
 			ControlFlow::Normal => {},
-			c => panic!("Upward control flow reached top level"),
+			c => return Err(InterpreterError::UpwardControlFlowReachedTopLevel),
 		}
 	}
 	dbg!(state);
@@ -152,10 +152,10 @@ fn evaluate_expression(
 		Expression::Call(function, mut arguments) => {
 			let function = evaluate_expression(state, *function)?;
 			let Value::Function(mut parameters, body) = function else {
-				todo!();
+				return Err(InterpreterError::ExpectedFunction);
 			};
 			if arguments.len() != parameters.len() {
-				todo!();
+				return Err(InterpreterError::WrongArgumentCount);
 			}
 			state.push();
 			for i in 0..arguments.len() {
@@ -169,7 +169,7 @@ fn evaluate_expression(
 			for statement in body {
 				match interpret_statement(state, statement)? {
 					ControlFlow::Normal => {},
-					ControlFlow::Continue | ControlFlow::Break => todo!(),
+					ControlFlow::Continue | ControlFlow::Break => return Err(InterpreterError::UpwardControlFlowReachedTopLevel),
 					ControlFlow::Return(value) => return_value = value,
 				}
 			}

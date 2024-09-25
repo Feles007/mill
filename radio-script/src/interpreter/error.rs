@@ -4,4 +4,8 @@ pub enum InterpreterError {
 	UnknownIdentifier,
 	UnsupportedOperation,
 	ExpectedBool,
+	ExpectedFunction,
+	WrongArgumentCount,
+	UpwardControlFlowReachedTopLevel,
+	LoopControlFlowReachedFunction,
 }
