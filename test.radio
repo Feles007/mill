@@ -1,14 +1,8 @@
 # Mill
-{
-	let x = 0;
-	let y = - 3;
-	loop {
-		x = x + 1;
 
-		if x > 10 {
-			break;
-		}
-	}
-}
 
-let f = fn() {};
+let add = fn(a, b) {
+	return a + b;
+};
+
+let x = add(9 + 4, 8);

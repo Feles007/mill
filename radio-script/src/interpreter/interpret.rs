@@ -148,8 +148,34 @@ fn evaluate_expression(
 		),
 		Expression::Map(initializer) => todo!(),
 
-		Expression::Function(parameters, body) => todo!(),
-		Expression::Call(function, arguments) => todo!(),
+		Expression::Function(parameters, body) => Value::Function(parameters, body),
+		Expression::Call(function, mut arguments) => {
+			let function = evaluate_expression(state, *function)?;
+			let Value::Function(mut parameters, body) = function else {
+				todo!();
+			};
+			if arguments.len() != parameters.len() {
+				todo!();
+			}
+			state.push();
+			for i in 0..arguments.len() {
+				let value = evaluate_expression(state, arguments.remove(0))?;
+				state
+					.current_scope()
+					.variables
+					.insert(parameters.remove(0), value);
+			}
+			let mut return_value = Value::Null;
+			for statement in body {
+				match interpret_statement(state, statement)? {
+					ControlFlow::Normal => {},
+					ControlFlow::Continue | ControlFlow::Break => todo!(),
+					ControlFlow::Return(value) => return_value = value,
+				}
+			}
+			state.pop();
+			return_value
+		},
 		Expression::Member(value, member) => todo!(),
 
 		Expression::UnaryOperation(operand, operation) => {

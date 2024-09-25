@@ -1,4 +1,4 @@
-use crate::ast::{Float, Integer};
+use crate::ast::{Float, Identifier, Integer, Statement};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -11,5 +11,5 @@ pub enum Value {
 	Array(Vec<Value>),
 	Map,
 
-	Function,
+	Function(Vec<Identifier>, Vec<Statement>),
 }
