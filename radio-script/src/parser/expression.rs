@@ -70,37 +70,20 @@ fn parse_expression_bp(lexer: &mut Lexer, min_bp: u8) -> Result<Expression, Pars
 			let mut initializers = Vec::new();
 
 			loop {
-				let key;
-				match lexer.next()? {
+				let key = 
+				match lexer.peek()? {
 					Token::Eof => {
+						lexer.next()?;
 						return Err(lexer.error(ParseErrorKind::UnexpectedToken {
 							expected: "closing curly bracket",
 							found: Token::Eof,
 						}))
 					},
-					Token::Symbol(Symbol::CurlyRight) => break,
-					Token::Identifier(i) => {
-						key = Expression::String(i.0);
-					},
-					Token::Symbol(Symbol::SquareLeft) => {
-						key = parse_expression(lexer)?;
-						match lexer.next()? {
-							Token::Symbol(Symbol::SquareRight) => {},
-							t => {
-								return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-									expected: "closing square bracket",
-									found: t,
-								}))
-							},
-						}
-					},
-					t => {
-						return Err(lexer.error(ParseErrorKind::UnexpectedToken {
-							expected: "identifier or [expression]",
-							found: t,
-						}))
-					},
-				}
+					Token::Symbol(Symbol::CurlyRight) => {lexer.next()?;break},
+					_ => {
+						parse_expression(lexer)?
+					}
+				};
 				match lexer.next()? {
 					Token::Symbol(Symbol::Colon) => {},
 					t => {

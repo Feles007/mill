@@ -6,6 +6,7 @@ use crate::{
 		value::Value,
 	},
 };
+use std::collections::HashMap;
 
 pub fn interpret(ast: Ast) -> Result<(), InterpreterError> {
 	let mut state = State::new();
@@ -146,7 +147,20 @@ fn evaluate_expression(
 				.map(|e| evaluate_expression(state, e))
 				.collect::<Result<_, _>>()?,
 		),
-		Expression::Map(initializer) => todo!(),
+		Expression::Map(initializer) => {
+			let mut map = HashMap::new();
+			for (key, value) in initializer {
+				let key = evaluate_expression(state, key)?;
+				let value = evaluate_expression(state, value)?;
+
+				let Some(hashable_key) = key.try_as_hashable() else {
+					return Err(InterpreterError::MapKeyNotHashable);
+				};
+
+				map.insert(hashable_key, value);
+			}
+			Value::Map(map)
+		},
 
 		Expression::Function(parameters, body) => Value::Function(parameters, body),
 		Expression::Call(function, mut arguments) => {

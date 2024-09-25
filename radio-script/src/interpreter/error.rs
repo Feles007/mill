@@ -8,4 +8,5 @@ pub enum InterpreterError {
 	WrongArgumentCount,
 	UpwardControlFlowReachedTopLevel,
 	LoopControlFlowReachedFunction,
+	MapKeyNotHashable,
 }
