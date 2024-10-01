@@ -9,4 +9,5 @@ pub enum InterpreterError {
 	UpwardControlFlowReachedTopLevel,
 	LoopControlFlowReachedFunction,
 	MapKeyNotHashable,
+	KeyNotInMap,
 }
