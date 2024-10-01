@@ -1,0 +1,13 @@
+let x = 0;
+let iter = {"next": fn() {
+    if x < 10 {
+        x = x + 1;
+        return x - 1;
+    } else {
+        return null;
+    }
+}};
+
+for item in iter {
+
+}
