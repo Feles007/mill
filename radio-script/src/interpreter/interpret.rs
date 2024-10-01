@@ -190,7 +190,13 @@ fn evaluate_expression(
 			state.pop();
 			return_value
 		},
-		Expression::Member(value, member) => todo!(),
+		Expression::Member(value, member) => {
+			let expression = Expression::BinaryOperation(Box::new([
+				*value,
+				Expression::String(member.0)
+			]), BinaryOperation::Index);
+			evaluate_expression(state, expression)?
+		},
 
 		Expression::UnaryOperation(operand, operation) => {
 			unary_operation(evaluate_expression(state, *operand)?, operation)?
@@ -284,7 +290,15 @@ fn binary_operation(
 		//
 		// Index
 		//
-		(_, _, O::Index) => todo!(),
+		(V::Map(map), key, O::Index) => {
+			let Some(key) = key.try_as_hashable() else {
+				return Err(InterpreterError::MapKeyNotHashable);
+			};
+			match map.get(&key) {
+				Some(value) => value.clone(),
+				None => return Err(InterpreterError::KeyNotInMap),
+			}
+		},
 
 		_ => return Err(InterpreterError::UnsupportedOperation),
 	})
