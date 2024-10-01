@@ -1,7 +1,7 @@
 fn main() {
-	let source = std::fs::read_to_string("test.radio").unwrap();
+	let source = std::fs::read_to_string("test.mill").unwrap();
 
-	let ast = match radio_script::parser::parse(source) {
+	let ast = match mill::parser::parse(source) {
 		Ok(a) => a,
 		Err(e) => {
 			println!("{e}");
@@ -9,7 +9,7 @@ fn main() {
 		},
 	};
 
-	match radio_script::interpreter::interpret(ast) {
+	match mill::interpreter::interpret(ast) {
 		Ok(()) => {},
 		Err(e) => {
 			println!("{e:?}");

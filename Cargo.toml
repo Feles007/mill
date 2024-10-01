@@ -1,3 +1,3 @@
 [workspace]
-members = ["radio-script", "cli"]
+members = ["mill", "cli"]
 resolver = "2"
