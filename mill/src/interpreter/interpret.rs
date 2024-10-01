@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
 	ast::{Ast, BinaryOperation, Expression, Identifier, Lvalue, Statement, UnaryOperation},
 	interpreter::{
@@ -6,7 +8,6 @@ use crate::{
 		value::Value,
 	},
 };
-use std::collections::HashMap;
 
 pub fn interpret(ast: Ast) -> Result<(), InterpreterError> {
 	let mut state = State::new();
@@ -183,7 +184,9 @@ fn evaluate_expression(
 			for statement in body {
 				match interpret_statement(state, statement)? {
 					ControlFlow::Normal => {},
-					ControlFlow::Continue | ControlFlow::Break => return Err(InterpreterError::UpwardControlFlowReachedTopLevel),
+					ControlFlow::Continue | ControlFlow::Break => {
+						return Err(InterpreterError::UpwardControlFlowReachedTopLevel)
+					},
 					ControlFlow::Return(value) => return_value = value,
 				}
 			}
@@ -191,10 +194,10 @@ fn evaluate_expression(
 			return_value
 		},
 		Expression::Member(value, member) => {
-			let expression = Expression::BinaryOperation(Box::new([
-				*value,
-				Expression::String(member.0)
-			]), BinaryOperation::Index);
+			let expression = Expression::BinaryOperation(
+				Box::new([*value, Expression::String(member.0)]),
+				BinaryOperation::Index,
+			);
 			evaluate_expression(state, expression)?
 		},
 

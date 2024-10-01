@@ -1,5 +1,6 @@
-use crate::ast::{Float, Identifier, Integer, Statement};
 use std::collections::HashMap;
+
+use crate::ast::{Float, Identifier, Integer, Statement};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -23,7 +24,7 @@ impl Value {
 			Self::Integer(i) => HashableValue::Integer(i),
 			Self::String(s) => HashableValue::String(s),
 
-			_ => return None
+			_ => return None,
 		})
 	}
 }
